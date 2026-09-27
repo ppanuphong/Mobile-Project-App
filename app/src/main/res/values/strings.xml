@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">PetCare ดูแลสัตว์เลี้ยง</string>
+    <string name="notification_channel_name">นัดหมอและวัคซีน</string>
+    <string name="notification_channel_desc">แจ้งเตือนล่วงหน้าก่อนถึงวันนัดหมอหรือฉีดวัคซีนของสัตว์เลี้ยง</string>
+</resources>

@@ -1,0 +1,6 @@
+<resources>
+    <!-- ธีมของ Activity ก่อน Compose วาด (ใช้สีพื้นหลังเดียวกันเพื่อไม่ให้กระพริบ) -->
+    <style name="Theme.PetCare" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/background</item>
+    </style>
+</resources>
