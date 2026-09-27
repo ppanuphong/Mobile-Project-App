@@ -53,20 +53,30 @@ Repository ส่งข้อมูลกลับเป็น `Flow` ที่�
 
 ต้องใช้ Android Studio (หรือ JDK 17+) และ Android SDK 37
 
-### แบบที่ 1: ใช้ Firebase จริงบนคลาวด์
+### แบบที่ 1: ใช้ Firebase จริงบนคลาวด์ (ตั้งค่าไว้แล้ว)
 
-1. สร้างโปรเจกต์ที่ [Firebase Console](https://console.firebase.google.com)
-2. เพิ่มแอป Android ด้วย package name `com.petcare.app` แล้วดาวน์โหลด `google-services.json`
-   ไปวางทับ [app/google-services.json](app/google-services.json) (ไฟล์ที่ให้มาเป็นตัวอย่าง ใช้ build ได้แต่เข้าสู่ระบบไม่ได้)
-3. **Authentication** → Sign-in method → เปิด **Email/Password**
-4. **Firestore Database** → สร้างฐานข้อมูล → แท็บ Rules → วางเนื้อหาจาก `firestore.rules` แล้ว Publish
-5. รันแอปจาก Android Studio หรือ `./gradlew installDebug`
+แอปเชื่อมกับโปรเจกต์ Firebase `petcare-5x7gf-a3068` แล้ว กดรันจาก Android Studio หรือสั่ง `./gradlew installDebug` ได้เลย
 
-### แบบที่ 2: ใช้ Firebase Local Emulator (ไม่ต้องมีโปรเจกต์ Firebase)
+| บริการ | ค่าที่ตั้งไว้ |
+|---|---|
+| Android app | `com.petcare.app` ([app/google-services.json](app/google-services.json)) |
+| Authentication | เปิด Email/Password |
+| Firestore | Standard edition, `asia-southeast1` (สิงคโปร์), rules จาก `firestore.rules` |
+
+ถ้าแก้ `firestore.rules` แล้วต้องการอัปโหลดขึ้นคลาวด์:
+
+```bash
+npx firebase-tools deploy --only firestore:rules
+```
+
+ถ้าจะย้ายไปใช้โปรเจกต์ Firebase อื่น ให้เพิ่มแอป Android `com.petcare.app` ในโปรเจกต์นั้น โหลด `google-services.json` มาวางทับ
+เปิด Email/Password ใน Authentication สร้าง Firestore แล้วแก้ `default` ใน `.firebaserc` เป็น ID ของโปรเจกต์ใหม่
+
+### แบบที่ 2: ใช้ Firebase Local Emulator (ข้อมูลอยู่ในเครื่อง ไม่แตะข้อมูลบนคลาวด์)
 
 ```bash
 # เทอร์มินัลที่ 1: เปิด emulator ของ Auth + Firestore (ต้องมี Node.js และ Java)
-npx firebase-tools emulators:start --only auth,firestore --project demo-petcare
+npx firebase-tools emulators:start --only auth,firestore
 
 # เทอร์มินัลที่ 2: ให้โทรศัพท์/emulator ต่อเข้าเครื่องเราผ่าน adb แล้วติดตั้งแอปโหมด emulator
 adb reverse tcp:9099 tcp:9099
