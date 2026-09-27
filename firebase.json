@@ -1,11 +1,21 @@
 {
   "firestore": {
+    "database": "(default)",
+    "location": "asia-southeast1",
     "rules": "firestore.rules"
   },
   "emulators": {
-    "auth": { "host": "0.0.0.0", "port": 9099 },
-    "firestore": { "host": "0.0.0.0", "port": 8080 },
-    "ui": { "enabled": false },
+    "auth": {
+      "host": "0.0.0.0",
+      "port": 9099
+    },
+    "firestore": {
+      "host": "0.0.0.0",
+      "port": 8080
+    },
+    "ui": {
+      "enabled": false
+    },
     "singleProjectMode": true
   }
 }
