@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.petcare.app.model.AppointmentItem
 import com.petcare.app.model.AppointmentKind
 import com.petcare.app.model.DisplayStatus
+import com.petcare.app.model.TreatmentOutcome
 import com.petcare.app.ui.theme.Fraunces
 import com.petcare.app.ui.theme.colors
 import com.petcare.app.util.DateUtils
@@ -154,7 +155,9 @@ fun AppointmentCard(
                         overflow = TextOverflow.Ellipsis,
                         textDecoration = if (isDone) TextDecoration.LineThrough else null,
                     )
-                    val details = listOfNotNull(
+                    // นัดที่บันทึกผลแล้ว แสดงผลวินิจฉัยแทนเวลา/คลินิก
+                    val diagnosis = appt.result?.diagnosis?.takeIf { isDone && it.isNotBlank() }
+                    val details = diagnosis?.let { "ผล: $it" } ?: listOfNotNull(
                         appt.time.takeIf { it.isNotBlank() }?.let { "$it น." },
                         appt.clinic.takeIf { it.isNotBlank() },
                     ).joinToString(" · ")
@@ -169,6 +172,10 @@ fun AppointmentCard(
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         StatusChip(item.status)
+                        appt.result?.outcomeEnum?.takeIf { it != TreatmentOutcome.NORMAL }?.let {
+                            Spacer(Modifier.width(6.dp))
+                            OutcomeChip(it)
+                        }
                         if (!isDone) {
                             Spacer(Modifier.width(8.dp))
                             Text(

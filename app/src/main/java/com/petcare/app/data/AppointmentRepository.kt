@@ -5,11 +5,14 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.petcare.app.data.remote.FirestoreCollections
 import com.petcare.app.data.remote.listenAsFlow
 import com.petcare.app.model.AppointmentStatus
+import com.petcare.app.model.ProgressUpdate
+import com.petcare.app.model.TreatmentResult
 import com.petcare.app.model.VetAppointment
 import com.petcare.app.notification.ReminderScheduler
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
 
 class AppointmentRepository(
     private val firestore: FirebaseFirestore,
@@ -54,6 +57,42 @@ class AppointmentRepository(
         val status = if (done) AppointmentStatus.DONE else AppointmentStatus.PENDING
         appointments.document(appointment.id).update("status", status.name).await()
         reminderScheduler.schedule(appointment.copy(status = status.name), petName)
+    }
+
+    /**
+     * บันทึกผลการรักษาและปิดนัด (status = DONE)
+     * ถ้ามี [followUp] จะสร้างนัดติดตามผลพร้อมกันใน batch เดียว แล้วโยง id ไว้ในผลการรักษา
+     */
+    suspend fun recordResult(
+        appointment: VetAppointment,
+        result: TreatmentResult,
+        followUp: VetAppointment?,
+        petName: String,
+    ) {
+        val uid = requireUid()
+        val apptRef = appointments.document(appointment.id)
+        val savedFollowUp = followUp?.copy(id = appointments.document().id, ownerId = uid, followUpOf = appointment.id)
+        val updated = appointment.copy(
+            ownerId = uid,
+            status = AppointmentStatus.DONE.name,
+            result = if (savedFollowUp != null) result.copy(followUpAppointmentId = savedFollowUp.id) else result,
+        )
+        firestore.runBatch { batch ->
+            batch.set(apptRef, updated)
+            if (savedFollowUp != null) batch.set(appointments.document(savedFollowUp.id), savedFollowUp)
+        }.await()
+        reminderScheduler.cancel(appointment.id)
+        savedFollowUp?.let { reminderScheduler.schedule(it, petName) }
+    }
+
+    /** เพิ่มบันทึกอาการในไทม์ไลน์ติดตามผล */
+    suspend fun addProgress(appointment: VetAppointment, update: ProgressUpdate) {
+        val withId = if (update.id.isBlank()) update.copy(id = UUID.randomUUID().toString()) else update
+        appointments.document(appointment.id).set(appointment.withProgress(withId)).await()
+    }
+
+    suspend fun deleteProgress(appointment: VetAppointment, updateId: String) {
+        appointments.document(appointment.id).set(appointment.withoutProgress(updateId)).await()
     }
 
     suspend fun delete(appointmentId: String) {

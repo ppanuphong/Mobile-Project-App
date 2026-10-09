@@ -31,6 +31,13 @@ class DateUtilsTest {
     }
 
     @Test
+    fun agoLabel() {
+        assertEquals("วันนี้", DateUtils.agoLabel("2026-09-27", today))
+        assertEquals("เมื่อวาน", DateUtils.agoLabel("2026-09-26", today))
+        assertEquals("5 วันก่อน", DateUtils.agoLabel("2026-09-22", today))
+    }
+
+    @Test
     fun ageLabel() {
         assertEquals("2 ปี 4 เดือน", DateUtils.ageLabel("2024-05-27", today))
         assertEquals("3 เดือน", DateUtils.ageLabel("2026-06-20", today))

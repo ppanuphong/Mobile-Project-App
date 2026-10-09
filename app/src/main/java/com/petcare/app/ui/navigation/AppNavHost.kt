@@ -33,8 +33,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.petcare.app.notification.NotificationHelper
 import com.petcare.app.ui.components.LoadingBox
+import com.petcare.app.ui.screens.appointments.AppointmentDetailScreen
 import com.petcare.app.ui.screens.appointments.AppointmentFormScreen
 import com.petcare.app.ui.screens.appointments.AppointmentListScreen
+import com.petcare.app.ui.screens.appointments.TreatmentResultScreen
 import com.petcare.app.ui.screens.home.HomeScreen
 import com.petcare.app.ui.screens.login.LoginScreen
 import com.petcare.app.ui.screens.login.RegisterScreen
@@ -135,7 +137,7 @@ fun AppNavHost(
             composable(Routes.HOME) {
                 HomeScreen(
                     onOpenPet = { navController.navigate(Routes.petDetail(it)) },
-                    onOpenAppointment = { navController.navigate(Routes.appointmentForm(appointmentId = it)) },
+                    onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                     onAddPet = { navController.navigate(Routes.petForm()) },
                     onAddAppointment = { navController.navigate(Routes.appointmentForm()) },
                     onSeeAllAppointments = { navController.navigateToTab(Routes.APPOINTMENTS) },
@@ -151,14 +153,14 @@ fun AppNavHost(
             }
             composable(Routes.APPOINTMENTS) {
                 AppointmentListScreen(
-                    onOpenAppointment = { navController.navigate(Routes.appointmentForm(appointmentId = it)) },
+                    onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                     onAddAppointment = { navController.navigate(Routes.appointmentForm()) },
                     onAddPet = { navController.navigate(Routes.petForm()) },
                 )
             }
             composable(Routes.NOTIFICATIONS) {
                 NotificationScreen(
-                    onOpenAppointment = { navController.navigate(Routes.appointmentForm(appointmentId = it)) },
+                    onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                 )
             }
 
@@ -170,7 +172,7 @@ fun AppNavHost(
                     onNavigateUp = { navController.navigateUp() },
                     onEdit = { navController.navigate(Routes.petForm(it)) },
                     onAddAppointment = { navController.navigate(Routes.appointmentForm(petId = it)) },
-                    onOpenAppointment = { navController.navigate(Routes.appointmentForm(appointmentId = it)) },
+                    onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                 )
             }
             composable(
@@ -178,6 +180,23 @@ fun AppNavHost(
                 arguments = listOf(optionalStringArg(Routes.ARG_PET_ID)),
             ) {
                 PetFormScreen(onDone = { navController.navigateUp() })
+            }
+            composable(
+                Routes.APPOINTMENT_DETAIL,
+                arguments = listOf(navArgument(Routes.ARG_APPOINTMENT_ID) { type = NavType.StringType }),
+            ) {
+                AppointmentDetailScreen(
+                    onNavigateUp = { navController.navigateUp() },
+                    onEdit = { navController.navigate(Routes.appointmentForm(appointmentId = it)) },
+                    onRecordResult = { navController.navigate(Routes.treatmentResult(it)) },
+                    onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
+                )
+            }
+            composable(
+                Routes.TREATMENT_RESULT,
+                arguments = listOf(navArgument(Routes.ARG_APPOINTMENT_ID) { type = NavType.StringType }),
+            ) {
+                TreatmentResultScreen(onDone = { navController.navigateUp() })
             }
             composable(
                 Routes.APPOINTMENT_FORM,

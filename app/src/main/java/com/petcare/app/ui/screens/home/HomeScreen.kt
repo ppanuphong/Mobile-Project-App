@@ -40,7 +40,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.petcare.app.model.AppointmentItem
 import com.petcare.app.ui.components.AppointmentCard
+import com.petcare.app.ui.components.ConditionChip
 import com.petcare.app.ui.components.ConfirmDialog
 import com.petcare.app.ui.components.EmptyState
 import com.petcare.app.ui.components.LoadingBox
@@ -165,6 +167,19 @@ fun HomeScreen(
                 }
             }
 
+            if (state.underTreatment.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        "กำลังติดตามการรักษา",
+                        count = state.underTreatment.size,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+                items(state.underTreatment, key = { "t_" + it.appointment.id }) { item ->
+                    TreatmentCaseCard(item, onClick = { onOpenAppointment(item.appointment.id) })
+                }
+            }
+
             item {
                 SectionHeader(
                     "สัตว์เลี้ยงของฉัน",
@@ -209,6 +224,50 @@ fun HomeScreen(
             onConfirm = onLogout,
             onDismiss = { confirmLogout = false },
         )
+    }
+}
+
+/** เคสที่กำลังรักษา: ผลวินิจฉัย + อาการล่าสุดจากไทม์ไลน์ติดตามผล */
+@Composable
+private fun TreatmentCaseCard(item: AppointmentItem, onClick: () -> Unit) {
+    val appt = item.appointment
+    val latest = appt.latestProgress
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = CardDefaults.outlinedCardBorder(),
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            item.pet?.let { PetAvatar(it.species, it.avatarColor, photo = it.photo, size = 44.dp) }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    listOfNotNull(item.pet?.name, appt.result?.diagnosis?.takeIf { it.isNotBlank() } ?: appt.title)
+                        .joinToString(" · "),
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (latest != null) {
+                        ConditionChip(latest.conditionEnum)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "อัปเดต${DateUtils.agoLabel(latest.date).let { if (it.endsWith("ก่อน")) " $it" else it }}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        Text(
+                            "รักษาเมื่อ ${DateUtils.toThaiDate(appt.date)} · ยังไม่มีบันทึกอาการ",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = PetCareTheme.colors.amberText,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

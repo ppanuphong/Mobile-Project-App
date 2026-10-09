@@ -23,6 +23,8 @@ data class HomeUiState(
     val userName: String = "",
     val overdue: List<AppointmentItem> = emptyList(),
     val dueSoon: List<AppointmentItem> = emptyList(),
+    /** เคสที่ยังอยู่ระหว่างรักษา ต้องติดตามอาการ */
+    val underTreatment: List<AppointmentItem> = emptyList(),
     val pets: List<PetSummary> = emptyList(),
     val doneThisMonth: Int = 0,
 )
@@ -46,6 +48,7 @@ class HomeViewModel(
             userName = session?.name.orEmpty(),
             overdue = pending.filter { it.status == DisplayStatus.OVERDUE }.sortedByDescending { it.appointment.date },
             dueSoon = pending.filter { it.status == DisplayStatus.DUE_SOON },
+            underTreatment = items.filter { it.appointment.isUnderTreatment }.sortedByDescending { it.appointment.date },
             pets = pets.map { pet ->
                 val mine = pending.filter { it.appointment.petId == pet.id }
                 PetSummary(

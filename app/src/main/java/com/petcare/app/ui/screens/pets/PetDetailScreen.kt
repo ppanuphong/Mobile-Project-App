@@ -55,6 +55,7 @@ import com.petcare.app.viewmodel.AppViewModelProvider
 import com.petcare.app.viewmodel.PetDetailUiState
 import com.petcare.app.viewmodel.PetDetailViewModel
 import com.petcare.app.viewmodel.PetHistoryTab
+import com.petcare.app.viewmodel.TreatmentResultViewModel
 
 @Composable
 fun PetDetailScreen(
@@ -232,6 +233,11 @@ private fun ProfileHeader(pet: Pet, state: PetDetailUiState) {
                     Modifier.weight(1.3f),
                 )
                 InfoCell("อายุ", DateUtils.ageLabel(pet.birthday), Modifier.weight(1f))
+                InfoCell(
+                    "น้ำหนักล่าสุด",
+                    state.latestWeightKg?.let { "${TreatmentResultViewModel.formatNumber(it)} กก." } ?: "-",
+                    Modifier.weight(1f),
+                )
             }
             Spacer(Modifier.padding(top = 8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

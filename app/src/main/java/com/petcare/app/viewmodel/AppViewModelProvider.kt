@@ -43,6 +43,12 @@ object AppViewModelProvider {
             AppointmentFormViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
         }
         initializer {
+            AppointmentDetailViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
+        }
+        initializer {
+            TreatmentResultViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
+        }
+        initializer {
             NotificationViewModel(container().petRepository, container().appointmentRepository, container().sessionManager)
         }
     }

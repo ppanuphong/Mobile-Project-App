@@ -25,10 +25,14 @@ object Routes {
 
     const val PET_DETAIL = "pet/{$ARG_PET_ID}"
     const val PET_FORM = "pet_form?$ARG_PET_ID={$ARG_PET_ID}"
+    const val APPOINTMENT_DETAIL = "appointment/{$ARG_APPOINTMENT_ID}"
+    const val TREATMENT_RESULT = "treatment_result/{$ARG_APPOINTMENT_ID}"
     const val APPOINTMENT_FORM = "appointment_form?$ARG_APPOINTMENT_ID={$ARG_APPOINTMENT_ID}&$ARG_PET_ID={$ARG_PET_ID}"
 
     fun petDetail(petId: String) = "pet/$petId"
     fun petForm(petId: String? = null) = if (petId == null) "pet_form" else "pet_form?$ARG_PET_ID=$petId"
+    fun appointmentDetail(appointmentId: String) = "appointment/$appointmentId"
+    fun treatmentResult(appointmentId: String) = "treatment_result/$appointmentId"
     fun appointmentForm(appointmentId: String? = null, petId: String? = null) = buildString {
         append("appointment_form")
         val params = listOfNotNull(

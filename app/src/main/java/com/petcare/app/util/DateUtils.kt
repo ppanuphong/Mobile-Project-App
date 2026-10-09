@@ -57,6 +57,16 @@ object DateUtils {
         }
     }
 
+    /** ข้อความบอกว่าผ่านมานานแค่ไหน เช่น "วันนี้", "เมื่อวาน", "3 วันก่อน" */
+    fun agoLabel(value: String, today: LocalDate = LocalDate.now()): String {
+        val days = -(daysUntil(value, today) ?: return "")
+        return when {
+            days <= 0L -> "วันนี้"
+            days == 1L -> "เมื่อวาน"
+            else -> "$days วันก่อน"
+        }
+    }
+
     /** อายุจากวันเกิด เช่น "2 ปี 3 เดือน" */
     fun ageLabel(birthday: String, today: LocalDate = LocalDate.now()): String {
         val b = parseDate(birthday) ?: return "ไม่ทราบอายุ"

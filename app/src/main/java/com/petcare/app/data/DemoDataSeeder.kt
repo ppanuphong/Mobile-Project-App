@@ -4,8 +4,13 @@ import com.petcare.app.model.AVATAR_COLORS
 import com.petcare.app.model.AppointmentKind
 import com.petcare.app.model.AppointmentStatus
 import com.petcare.app.model.Pet
+import com.petcare.app.model.PetCondition
+import com.petcare.app.model.ProgressUpdate
+import com.petcare.app.model.TreatmentOutcome
+import com.petcare.app.model.TreatmentResult
 import com.petcare.app.model.VetAppointment
 import com.petcare.app.util.DateUtils
+import kotlinx.coroutines.flow.first
 import java.time.LocalDate
 
 /** ใส่สัตว์เลี้ยงและนัดหมายตัวอย่างให้บัญชีเดโมที่เพิ่งสร้าง (วันที่อิงจากวันนี้) */
@@ -44,6 +49,10 @@ class DemoDataSeeder(
                 petId = mojiId, kind = AppointmentKind.VACCINE.name, title = "วัคซีนรวม 5 โรค",
                 date = day(-60), time = "14:00", vetName = "สพ.ญ. ศิริพร", clinic = "โรงพยาบาลสัตว์ใจดี",
                 status = AppointmentStatus.DONE.name,
+                result = TreatmentResult(
+                    diagnosis = "สุขภาพแข็งแรงดี", treatment = "ฉีดวัคซีนรวม 5 โรค (เข็มกระตุ้นประจำปี)",
+                    weightKg = 9.8, cost = 650.0, recordedAt = day(-60),
+                ),
             ) to moji.name,
             VetAppointment(
                 petId = tofuId, kind = AppointmentKind.CHECKUP.name, title = "ตรวจสุขภาพประจำปี",
@@ -57,5 +66,35 @@ class DemoDataSeeder(
             ) to tofu.name,
         )
         samples.forEach { (appt, petName) -> appointmentRepository.save(appt, petName) }
+
+        // เคสที่กำลังรักษา: บันทึกผล + นัดติดตามผล + อาการที่ดีขึ้นเรื่อย ๆ
+        val skinVisit = VetAppointment(
+            petId = tofuId, kind = AppointmentKind.TREATMENT.name, title = "ตรวจอาการคันและขนร่วง",
+            date = day(-10), time = "16:00", vetName = "น.สพ. ธนกฤต", clinic = "คลินิกรักษ์แมว",
+        )
+        val skinVisitId = appointmentRepository.save(skinVisit, tofu.name)
+        appointmentRepository.recordResult(
+            appointment = skinVisit.copy(id = skinVisitId),
+            result = TreatmentResult(
+                diagnosis = "ผิวหนังอักเสบจากเชื้อรา",
+                treatment = "ขูดผิวหนังตรวจ ฉีดยาลดการอักเสบ",
+                medications = "ยาฆ่าเชื้อรา 1 เม็ด หลังอาหารเช้า 14 วัน, แชมพูยา อาบสัปดาห์ละ 2 ครั้ง",
+                weightKg = 4.2, cost = 850.0, outcome = TreatmentOutcome.ONGOING.name, recordedAt = day(-10),
+            ),
+            followUp = VetAppointment(
+                petId = tofuId, kind = AppointmentKind.CHECKUP.name, title = "ติดตามผล: ตรวจอาการคันและขนร่วง",
+                date = day(4), time = "16:00", vetName = "น.สพ. ธนกฤต", clinic = "คลินิกรักษ์แมว",
+                reminderDaysBefore = 1,
+            ),
+            petName = tofu.name,
+        )
+        val progress = listOf(
+            ProgressUpdate(date = day(-6), condition = PetCondition.STABLE.name, note = "ยังเกาอยู่บ้าง กินยาได้ดี"),
+            ProgressUpdate(date = day(-2), condition = PetCondition.BETTER.name, note = "ขนเริ่มขึ้นใหม่ เกาน้อยลงมาก"),
+        )
+        progress.forEach { update ->
+            val current = appointmentRepository.observeAppointment(skinVisitId).first() ?: return@forEach
+            appointmentRepository.addProgress(current, update)
+        }
     }
 }

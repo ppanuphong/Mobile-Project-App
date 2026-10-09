@@ -9,6 +9,7 @@ import com.petcare.app.model.AppointmentItem
 import com.petcare.app.model.AppointmentKind
 import com.petcare.app.model.DisplayStatus
 import com.petcare.app.model.Pet
+import com.petcare.app.model.latestWeightKg
 import com.petcare.app.model.withPets
 import com.petcare.app.ui.navigation.Routes
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,7 @@ data class PetDetailUiState(
     val upcoming: List<AppointmentItem> = emptyList(),
     val vaccineHistory: List<AppointmentItem> = emptyList(),
     val visitHistory: List<AppointmentItem> = emptyList(),
+    val latestWeightKg: Double? = null,
     val deleted: Boolean = false,
 )
 
@@ -62,6 +64,7 @@ class PetDetailViewModel(
             upcoming = items.filter { it.status != DisplayStatus.DONE },
             vaccineHistory = vaccines,
             visitHistory = visits,
+            latestWeightKg = appointments.latestWeightKg(),
             deleted = isDeleted,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PetDetailUiState())
