@@ -171,7 +171,7 @@ private fun PetRow(
         border = CardDefaults.outlinedCardBorder(),
     ) {
         Row(Modifier.padding(start = 14.dp, top = 12.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-            PetAvatar(pet.species, pet.avatarColor, size = 56.dp)
+            PetAvatar(pet.species, pet.avatarColor, photo = pet.photo, size = 56.dp)
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
                 Text(pet.name, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)

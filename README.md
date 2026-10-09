@@ -7,9 +7,9 @@
 
 | หน้าจอ | รายละเอียด |
 |---|---|
-| เข้าสู่ระบบ / สมัครสมาชิก | Firebase Auth (อีเมล + รหัสผ่าน), แสดง loading/error เป็นภาษาไทย, ปุ่มบัญชีเดโม, จำ session ด้วย DataStore |
+| เข้าสู่ระบบ / สมัครสมาชิก | Firebase Auth (อีเมล + รหัสผ่าน), แสดง loading/error เป็นภาษาไทย, ปุ่มบัญชีเดโม, จำ session ด้วย DataStore, ตอนสมัครเลือกสัตว์เลี้ยงตัวแรกตามหมวดหมู่และสายพันธุ์จาก API ได้ |
 | หน้าหลัก | สรุปจำนวนนัดเลยกำหนด / ใกล้ถึง / เสร็จเดือนนี้, รายการนัดที่เลยกำหนดและใกล้ถึงใน 7 วัน, รายชื่อสัตว์เลี้ยง |
-| สัตว์เลี้ยง | ค้นหา เพิ่ม แก้ไข ลบ, โปรไฟล์แยกรายตัวพร้อมแท็บ "กำลังจะถึง / ประวัติวัคซีน / ประวัติหาหมอ" |
+| สัตว์เลี้ยง | ค้นหา เพิ่ม แก้ไข ลบ, ใส่รูปจากคลังภาพหรือถ่ายด้วยกล้อง, โปรไฟล์แยกรายตัวพร้อมแท็บ "กำลังจะถึง / ประวัติวัคซีน / ประวัติหาหมอ" |
 | นัดหมาย | เพิ่ม แก้ไข ลบ (ปัดซ้าย), ทำเครื่องหมายว่าเสร็จ, กรองตามสถานะและตามสัตว์เลี้ยง |
 | แจ้งเตือน | เปิด/ปิดการแจ้งเตือน, ขอสิทธิ์ระบบ, ส่งทดสอบ, รายการที่ถึงเวลาเตือน / เลยกำหนด / ตั้งไว้ล่วงหน้า |
 
@@ -37,6 +37,25 @@ app/src/main/java/com/petcare/app/
 การไหลของข้อมูล: `Screen (Compose)` → `ViewModel (StateFlow)` → `Repository` → `Firestore / Auth`
 Repository ส่งข้อมูลกลับเป็น `Flow` ที่มาจาก `addSnapshotListener` จึงอัปเดตหน้าจอทันทีเมื่อข้อมูลเปลี่ยน
 
+## API ข้อมูลสัตว์เลี้ยง (หน้าสมัครสมาชิก)
+
+ตอนสมัคร ผู้ใช้เลือกหมวดหมู่สัตว์ → สายพันธุ์ → ตั้งชื่อ แล้วแอปบันทึกเป็นสัตว์เลี้ยงตัวแรกให้ (ข้ามได้)
+
+| ข้อมูล | API | หมายเหตุ |
+|---|---|---|
+| หมวดหมู่ทั้งหมด + สายพันธุ์ กระต่าย นก ปลา สัตว์ฟันแทะ สัตว์เลื้อยคลาน สัตว์เลี้ยงพิเศษ | PetCare Catalog API `https://petcare-5x7gf-a3068.web.app/api/pet-catalog.json` | ไฟล์ [hosting/api/pet-catalog.json](hosting/api/pet-catalog.json) บน Firebase Hosting |
+| สายพันธุ์สุนัข (165) + รูปตัวอย่าง | [Dog CEO API](https://dog.ceo/dog-api/) | ฟรี ไม่ต้องใช้ key |
+| สายพันธุ์แมว (98) | [catfact.ninja](https://catfact.ninja) | ฟรี ไม่ต้องใช้ key |
+
+โค้ดอยู่ที่ [PetApi.kt](app/src/main/java/com/petcare/app/data/remote/PetApi.kt) (เรียก API + แปลง JSON) และ
+[PetCatalogRepository.kt](app/src/main/java/com/petcare/app/data/PetCatalogRepository.kt)
+
+แก้รายการหมวดหมู่หรือสายพันธุ์: แก้ `hosting/api/pet-catalog.json` แล้วสั่ง
+
+```bash
+npx firebase-tools deploy --only hosting
+```
+
 ## โครงสร้างข้อมูลใน Firestore
 
 | Collection | เอกสาร | หมายเหตุ |
@@ -46,6 +65,8 @@ Repository ส่งข้อมูลกลับเป็น `Flow` ที่�
 | `appointments/{id}` | `VetAppointment` | มี `ownerId` เพิ่มเพื่อ query และ security rules |
 
 - `date` = `"yyyy-MM-dd"`, `time` = `"HH:mm"`, `status` = `"PENDING"` / `"DONE"`
+- `Pet.photo` = รูปโปรไฟล์ JPEG 480×480 (~30–60 KB) เข้ารหัส Base64 เก็บในเอกสารเลย
+  เพราะ Firebase Storage ของโปรเจกต์ใหม่ต้องใช้แพ็กเกจ Blaze; แอปย่อรูปให้ก่อนบันทึก ([PetPhotoProcessor.kt](app/src/main/java/com/petcare/app/data/PetPhotoProcessor.kt))
 - สถานะ "เลยกำหนด" คำนวณจากวันที่ตอนแสดงผล ไม่ได้เก็บลงฐานข้อมูล
 - กฎความปลอดภัยอยู่ที่ [firestore.rules](firestore.rules): ผู้ใช้อ่าน/เขียนได้เฉพาะข้อมูลของตัวเอง
 

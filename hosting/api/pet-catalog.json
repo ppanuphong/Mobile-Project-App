@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "dog",
+      "name": "สุนัข",
+      "emoji": "🐶",
+      "source": "dog.ceo"
+    },
+    {
+      "id": "cat",
+      "name": "แมว",
+      "emoji": "🐱",
+      "source": "catfact.ninja"
+    },
+    {
+      "id": "rabbit",
+      "name": "กระต่าย",
+      "emoji": "🐰",
+      "breeds": [
+        { "name": "ฮอลแลนด์ลอป", "nameEn": "Holland Lop" },
+        { "name": "เนเธอร์แลนด์ดวอร์ฟ", "nameEn": "Netherland Dwarf" },
+        { "name": "มินิเร็กซ์", "nameEn": "Mini Rex" },
+        { "name": "ไลอ้อนเฮด", "nameEn": "Lionhead" },
+        { "name": "ดัตช์", "nameEn": "Dutch" },
+        { "name": "อิงลิชลอป", "nameEn": "English Lop" },
+        { "name": "แองโกร่า", "nameEn": "Angora" },
+        { "name": "เฟลมมิชไจแอนท์", "nameEn": "Flemish Giant" },
+        { "name": "กระต่ายพื้นเมืองไทย", "nameEn": "Thai Native Rabbit" }
+      ]
+    },
+    {
+      "id": "bird",
+      "name": "นก",
+      "emoji": "🐦",
+      "breeds": [
+        { "name": "หงส์หยก", "nameEn": "Budgerigar" },
+        { "name": "ค็อกคาเทล", "nameEn": "Cockatiel" },
+        { "name": "เลิฟเบิร์ด", "nameEn": "Lovebird" },
+        { "name": "ฟอพัส", "nameEn": "Forpus" },
+        { "name": "ซันคอนัวร์", "nameEn": "Sun Conure" },
+        { "name": "แอฟริกันเกรย์", "nameEn": "African Grey Parrot" },
+        { "name": "กระตั้ว", "nameEn": "Cockatoo" },
+        { "name": "มาคอว์", "nameEn": "Macaw" },
+        { "name": "นกกรงหัวจุก", "nameEn": "Red-whiskered Bulbul" },
+        { "name": "นกเขาชวา", "nameEn": "Zebra Dove" },
+        { "name": "นกฟินช์", "nameEn": "Finch" },
+        { "name": "นกคีรีบูน", "nameEn": "Canary" }
+      ]
+    },
+    {
+      "id": "fish",
+      "name": "ปลา",
+      "emoji": "🐟",
+      "breeds": [
+        { "name": "ปลากัด", "nameEn": "Betta" },
+        { "name": "ปลาทอง", "nameEn": "Goldfish" },
+        { "name": "ปลาคาร์ป (โค่ย)", "nameEn": "Koi" },
+        { "name": "ปลาหางนกยูง", "nameEn": "Guppy" },
+        { "name": "ปลาหมอสี", "nameEn": "Flowerhorn" },
+        { "name": "ปลาอะโรวาน่า", "nameEn": "Arowana" },
+        { "name": "ปลาเทวดา", "nameEn": "Angelfish" },
+        { "name": "ปลานีออน", "nameEn": "Neon Tetra" },
+        { "name": "ปลาปอมปาดัวร์", "nameEn": "Discus" },
+        { "name": "ปลาซักเกอร์", "nameEn": "Pleco" },
+        { "name": "ปลามอลลี่", "nameEn": "Molly" }
+      ]
+    },
+    {
+      "id": "rodent",
+      "name": "สัตว์ฟันแทะ",
+      "emoji": "🐹",
+      "breeds": [
+        { "name": "แฮมสเตอร์ไจแอนท์ (ซีเรียน)", "nameEn": "Syrian Hamster", "species": "หนูแฮมสเตอร์" },
+        { "name": "แฮมสเตอร์แคมป์เบลล์", "nameEn": "Campbell's Dwarf Hamster", "species": "หนูแฮมสเตอร์" },
+        { "name": "แฮมสเตอร์วินเทอร์ไวท์", "nameEn": "Winter White Hamster", "species": "หนูแฮมสเตอร์" },
+        { "name": "แฮมสเตอร์โรโบรอฟสกี้", "nameEn": "Roborovski Hamster", "species": "หนูแฮมสเตอร์" },
+        { "name": "หนูตะเภา (แกสบี้)", "nameEn": "Guinea Pig", "species": "หนูตะเภา" },
+        { "name": "ชินชิล่า", "nameEn": "Chinchilla", "species": "ชินชิล่า" },
+        { "name": "เจอร์บิล", "nameEn": "Gerbil", "species": "หนูเจอร์บิล" },
+        { "name": "หนูแรท", "nameEn": "Fancy Rat", "species": "หนูแรท" },
+        { "name": "เดกู", "nameEn": "Degu", "species": "เดกู" }
+      ]
+    },
+    {
+      "id": "reptile",
+      "name": "สัตว์เลื้อยคลาน",
+      "emoji": "🦎",
+      "breeds": [
+        { "name": "เต่าซูคาต้า", "nameEn": "Sulcata Tortoise", "species": "เต่า" },
+        { "name": "เต่าดาวอินเดีย", "nameEn": "Indian Star Tortoise", "species": "เต่า" },
+        { "name": "เต่าแก้มแดง", "nameEn": "Red-eared Slider", "species": "เต่า" },
+        { "name": "อีกัวน่าเขียว", "nameEn": "Green Iguana", "species": "อีกัวน่า" },
+        { "name": "เบียร์ดดราก้อน", "nameEn": "Bearded Dragon", "species": "กิ้งก่า" },
+        { "name": "ตุ๊กแกเลพเพิร์ด", "nameEn": "Leopard Gecko", "species": "ตุ๊กแก" },
+        { "name": "งูบอลไพธอน", "nameEn": "Ball Python", "species": "งู" },
+        { "name": "งูคอร์นสเนค", "nameEn": "Corn Snake", "species": "งู" }
+      ]
+    },
+    {
+      "id": "exotic",
+      "name": "สัตว์เลี้ยงพิเศษ",
+      "emoji": "🦔",
+      "breeds": [
+        { "name": "เม่นแคระ", "nameEn": "African Pygmy Hedgehog", "species": "เม่นแคระ" },
+        { "name": "ชูก้าไกลเดอร์", "nameEn": "Sugar Glider", "species": "ชูก้าไกลเดอร์" },
+        { "name": "เฟอร์เร็ต", "nameEn": "Ferret", "species": "เฟอร์เร็ต" }
+      ]
+    }
+  ]
+}

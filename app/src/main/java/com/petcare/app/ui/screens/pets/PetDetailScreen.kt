@@ -213,7 +213,7 @@ private fun ProfileHeader(pet: Pet, state: PetDetailUiState) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                PetAvatar(pet.species, pet.avatarColor, size = 72.dp)
+                PetAvatar(pet.species, pet.avatarColor, photo = pet.photo, size = 72.dp)
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f)) {
                     Text(pet.name, style = MaterialTheme.typography.headlineSmall)

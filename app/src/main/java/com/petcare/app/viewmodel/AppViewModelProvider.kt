@@ -20,12 +20,21 @@ object AppViewModelProvider {
             )
         }
         initializer { LoginViewModel(container().authRepository) }
-        initializer { RegisterViewModel(container().authRepository) }
+        initializer {
+            RegisterViewModel(
+                container().authRepository,
+                container().petRepository,
+                container().petCatalogRepository,
+                container().petPhotoProcessor,
+            )
+        }
         initializer {
             HomeViewModel(container().petRepository, container().appointmentRepository, container().sessionManager)
         }
         initializer { PetViewModel(container().petRepository, container().appointmentRepository) }
-        initializer { PetFormViewModel(createSavedStateHandle(), container().petRepository) }
+        initializer {
+            PetFormViewModel(createSavedStateHandle(), container().petRepository, container().petPhotoProcessor)
+        }
         initializer {
             PetDetailViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
         }

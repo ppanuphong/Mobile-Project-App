@@ -13,3 +13,4 @@
 # Firebase Local Emulator
 firebase-debug.log
 firestore-debug.log
+.firebase/

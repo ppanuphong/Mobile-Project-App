@@ -9,9 +9,12 @@ import com.petcare.app.BuildConfig
 import com.petcare.app.data.AppointmentRepository
 import com.petcare.app.data.AuthRepository
 import com.petcare.app.data.DemoDataSeeder
+import com.petcare.app.data.PetCatalogRepository
+import com.petcare.app.data.PetPhotoProcessor
 import com.petcare.app.data.PetRepository
 import com.petcare.app.data.SessionManager
 import com.petcare.app.data.UserRepository
+import com.petcare.app.data.remote.PetApiClient
 import com.petcare.app.notification.ReminderScheduler
 
 /** Dependency injection แบบ manual: สร้าง repository ทุกตัวครั้งเดียวต่อแอป */
@@ -39,6 +42,8 @@ class AppContainer(context: Context) {
     val userRepository by lazy { UserRepository(firestore) }
     val petRepository by lazy { PetRepository(firestore, auth, reminderScheduler) }
     val appointmentRepository by lazy { AppointmentRepository(firestore, auth, reminderScheduler) }
+    val petCatalogRepository by lazy { PetCatalogRepository(PetApiClient()) }
+    val petPhotoProcessor = PetPhotoProcessor(context)
     val authRepository by lazy {
         AuthRepository(
             auth = auth,

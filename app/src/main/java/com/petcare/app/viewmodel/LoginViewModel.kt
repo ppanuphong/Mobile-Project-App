@@ -5,11 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.petcare.app.data.AuthRepository
 import com.petcare.app.model.User
+import com.petcare.app.util.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 data class LoginUiState(
     val email: String = "",
@@ -58,6 +60,12 @@ class LoginViewModel(private val authRepository: AuthRepository) : ViewModel() {
         }
     }
 }
+
+internal const val PHOTO_ERROR = "ใช้รูปนี้ไม่ได้ ลองเลือกรูปอื่น"
+
+/** วันเกิดสัตว์เลี้ยงเว้นว่างได้ แต่ต้องไม่ใช่วันในอนาคต */
+internal fun validatePetBirthday(birthday: String): String? =
+    DateUtils.parseDate(birthday)?.takeIf { it.isAfter(LocalDate.now()) }?.let { "วันเกิดต้องไม่เป็นวันในอนาคต" }
 
 internal fun validateEmail(email: String): String? = when {
     email.isBlank() -> "กรุณากรอกอีเมล"

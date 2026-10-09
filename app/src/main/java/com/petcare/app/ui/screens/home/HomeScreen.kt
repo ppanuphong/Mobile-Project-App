@@ -242,7 +242,7 @@ private fun PetMiniCard(summary: PetSummary, onClick: () -> Unit) {
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            PetAvatar(summary.pet.species, summary.pet.avatarColor, size = 44.dp)
+            PetAvatar(summary.pet.species, summary.pet.avatarColor, photo = summary.pet.photo, size = 44.dp)
             Text(
                 summary.pet.name,
                 style = MaterialTheme.typography.titleMedium,

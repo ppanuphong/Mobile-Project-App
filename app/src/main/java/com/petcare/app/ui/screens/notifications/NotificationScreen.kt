@@ -223,7 +223,7 @@ private fun ScheduledRow(reminder: ScheduledReminder, onClick: () -> Unit) {
         ListItem(
             colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
             leadingContent = {
-                if (pet != null) PetAvatar(pet.species, pet.avatarColor, size = 40.dp)
+                if (pet != null) PetAvatar(pet.species, pet.avatarColor, photo = pet.photo, size = 40.dp)
                 else Icon(Icons.Outlined.Schedule, contentDescription = null)
             },
             headlineContent = { Text(appt.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Phone
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -43,6 +44,8 @@ import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_CONFIRM
 import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_EMAIL
 import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_NAME
 import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_PASSWORD
+import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_PET_BIRTHDAY
+import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_PET_NAME
 import com.petcare.app.viewmodel.RegisterViewModel.Companion.FIELD_PHONE
 
 @Composable
@@ -97,6 +100,24 @@ fun RegisterScreen(
             RegisterField(
                 state.confirmPassword, viewModel::onConfirmChange, "ยืนยันรหัสผ่าน", Icons.Outlined.Lock,
                 errors[FIELD_CONFIRM], KeyboardType.Password, isPassword = true, imeAction = ImeAction.Done,
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 12.dp))
+            PetPickerSection(
+                state = state.pet,
+                petNameError = errors[FIELD_PET_NAME],
+                petBirthdayError = errors[FIELD_PET_BIRTHDAY],
+                onRetryCategories = viewModel::loadCategories,
+                onSelectCategory = viewModel::selectCategory,
+                onRetryBreeds = viewModel::loadBreeds,
+                onBreedQueryChange = viewModel::onBreedQueryChange,
+                onSelectBreed = viewModel::selectBreed,
+                onPetNameChange = viewModel::onPetNameChange,
+                onBirthdayChange = viewModel::onBirthdayChange,
+                onAvatarColorChange = viewModel::onAvatarColorChange,
+                onPhotoPicked = viewModel::onPhotoPicked,
+                onRemovePhoto = viewModel::onRemovePhoto,
+                onClear = viewModel::clearPet,
             )
 
             Spacer(Modifier.height(8.dp))
