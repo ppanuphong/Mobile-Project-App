@@ -163,10 +163,9 @@ fun DisplayStatus.colors(): StatusColors {
     val c = PetCareTheme.colors
     return when (this) {
         DisplayStatus.OVERDUE -> StatusColors(c.rustContainer, c.onRustContainer, c.rust, c.rust)
-        DisplayStatus.DUE_SOON -> StatusColors(c.amberContainer, c.onAmberContainer, c.amber, c.amberText)
-        DisplayStatus.UPCOMING -> MaterialTheme.colorScheme.primary.let {
-            StatusColors(c.upcomingContainer, c.onUpcomingContainer, it, it)
-        }
+        // นัดที่ยังไม่เสร็จ (ใกล้หรือไกล) ใช้สีเดียวกัน แยกเฉพาะเลยกำหนด/เสร็จแล้ว
+        DisplayStatus.DUE_SOON, DisplayStatus.UPCOMING ->
+            StatusColors(c.amberContainer, c.onAmberContainer, c.amber, c.amberText)
         DisplayStatus.DONE -> StatusColors(c.doneContainer, c.onDoneContainer, c.done, c.done)
     }
 }

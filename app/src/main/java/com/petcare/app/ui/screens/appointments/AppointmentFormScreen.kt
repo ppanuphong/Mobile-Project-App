@@ -41,10 +41,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.petcare.app.model.AppointmentKind
 import com.petcare.app.notification.ReminderScheduler
+import com.petcare.app.ui.components.BreedDropdown
 import com.petcare.app.ui.components.DatePickerField
 import com.petcare.app.ui.components.EmptyState
 import com.petcare.app.ui.components.LoadingBox
 import com.petcare.app.ui.components.PetCareScaffold
+import com.petcare.app.ui.components.SpeciesDropdown
 import com.petcare.app.ui.components.TimePickerField
 import com.petcare.app.ui.components.icon
 import com.petcare.app.ui.components.speciesEmoji
@@ -125,6 +127,21 @@ fun AppointmentFormScreen(
                 }
             }
             errors[FIELD_PET]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+
+            SpeciesDropdown(
+                value = state.species,
+                onSelect = viewModel::onSpeciesChange,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            BreedDropdown(
+                value = state.breed,
+                species = state.species,
+                options = state.breedOptions,
+                loading = state.breedsLoading,
+                fromApi = state.breedsFromApi,
+                onValueChange = viewModel::onBreedChange,
+                modifier = Modifier.fillMaxWidth(),
+            )
 
             Text("ประเภท", style = MaterialTheme.typography.labelLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -188,6 +188,7 @@ fun AppNavHost(
                 AppointmentDetailScreen(
                     onNavigateUp = { navController.navigateUp() },
                     onEdit = { navController.navigate(Routes.appointmentForm(appointmentId = it)) },
+                    onOpenPet = { navController.navigate(Routes.petDetail(it)) },
                     onRecordResult = { navController.navigate(Routes.treatmentResult(it)) },
                     onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                 )

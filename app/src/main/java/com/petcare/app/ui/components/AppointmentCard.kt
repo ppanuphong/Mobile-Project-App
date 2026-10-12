@@ -70,7 +70,7 @@ fun StatusChip(status: DisplayStatus, modifier: Modifier = Modifier) {
 
 /**
  * การ์ดนัดหมาย: บล็อกวันที่ทางซ้าย, รายละเอียดตรงกลาง, ปุ่มทำเครื่องหมายเสร็จทางขวา
- * แถบสีด้านซ้ายบอกสถานะ (สนิม = เลยกำหนด, อำพัน = ใกล้ถึง)
+ * แถบสีด้านซ้ายบอกสถานะ (แดง = เลยกำหนด, ส้ม = ยังไม่ถึง, เขียว = เสร็จแล้ว)
  */
 @Composable
 fun AppointmentCard(
@@ -171,15 +171,19 @@ fun AppointmentCard(
                         )
                     }
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        StatusChip(item.status)
+                        // นัดที่ยังไม่ถึงแสดงแค่วันที่ ชิปสถานะเหลือเฉพาะ "เลยกำหนด" กับ "เสร็จแล้ว"
+                        if (item.status == DisplayStatus.OVERDUE || isDone) {
+                            StatusChip(item.status)
+                            if (!isDone) Spacer(Modifier.width(8.dp))
+                        }
+                        // ผลการรักษาที่ยังต้องติดตาม / หายดีแล้ว
                         appt.result?.outcomeEnum?.takeIf { it != TreatmentOutcome.NORMAL }?.let {
                             Spacer(Modifier.width(6.dp))
                             OutcomeChip(it)
                         }
                         if (!isDone) {
-                            Spacer(Modifier.width(8.dp))
                             Text(
-                                DateUtils.relativeLabel(appt.date),
+                                DateUtils.toThaiDateWithDay(appt.date),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = statusColors.text,
                             )

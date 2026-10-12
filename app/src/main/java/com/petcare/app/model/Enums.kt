@@ -38,8 +38,8 @@ enum class AppointmentFilter(val label: String) {
     }
 }
 
-/** ชนิดสัตว์ที่มีให้เลือกในฟอร์ม (พิมพ์เองได้) */
-val SPECIES_OPTIONS = listOf("สุนัข", "แมว", "กระต่าย", "นก", "ปลา", "หนูแฮมสเตอร์", "เต่า")
+/** ชนิดสัตว์ที่มีให้เลือกในฟอร์ม (มีรายชื่อพันธุ์จาก API) */
+val SPECIES_OPTIONS = listOf("สุนัข", "แมว")
 
 /** สีพื้นหลังรูปโปรไฟล์สัตว์เลี้ยง */
 val AVATAR_COLORS = listOf(

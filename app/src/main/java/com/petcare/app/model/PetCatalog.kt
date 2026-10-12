@@ -14,7 +14,7 @@ data class PetCategory(
     val emoji: String,
     val source: BreedSource,
     /** มีเฉพาะหมวดที่ข้อมูลอยู่ใน Catalog API เอง; สุนัข/แมวโหลดจาก API ภายนอก */
-    val breeds: List<Breed> = emptyList(),
+    val breeds: List<CatalogBreed> = emptyList(),
 )
 
 /**
@@ -22,7 +22,7 @@ data class PetCategory(
  * @param species ชนิดสัตว์ที่จะบันทึกลง Pet.species (null = ใช้ชื่อหมวด)
  * @param dogCeoPath path ของ Dog CEO API เช่น "bulldog/french" ใช้ดึงรูป
  */
-data class Breed(
+data class CatalogBreed(
     val id: String,
     val name: String,
     val subtitle: String = "",
@@ -31,6 +31,6 @@ data class Breed(
 ) {
     companion object {
         /** ตัวเลือก "ไม่ทราบสายพันธุ์" — บันทึก breed เป็นค่าว่าง */
-        val UNKNOWN = Breed(id = "unknown", name = "ไม่ทราบ / พันธุ์ผสม")
+        val UNKNOWN = CatalogBreed(id = "unknown", name = "ไม่ทราบ / พันธุ์ผสม")
     }
 }

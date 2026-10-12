@@ -1,6 +1,6 @@
 package com.petcare.app.data.remote
 
-import com.petcare.app.model.Breed
+import com.petcare.app.model.CatalogBreed
 import com.petcare.app.model.BreedSource
 import com.petcare.app.model.PetCategory
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +57,7 @@ object PetApiParser {
             val breeds = c.optJSONArray("breeds")?.let { arr ->
                 (0 until arr.length()).map { j ->
                     val b = arr.getJSONObject(j)
-                    Breed(
+                    CatalogBreed(
                         id = "${c.getString("id")}/$j",
                         name = b.getString("name"),
                         subtitle = b.optString("nameEn"),
@@ -76,17 +76,17 @@ object PetApiParser {
     }
 
     /** Dog CEO ส่งมาเป็น { "bulldog": ["boston", "french"], "beagle": [] } → แตกเป็นรายการเดียว */
-    fun parseDogBreeds(json: String): List<Breed> {
+    fun parseDogBreeds(json: String): List<CatalogBreed> {
         val message = JSONObject(json).getJSONObject("message")
-        val result = mutableListOf<Breed>()
+        val result = mutableListOf<CatalogBreed>()
         message.keys().forEach { main ->
             val subs = message.getJSONArray(main)
             if (subs.length() == 0) {
-                result += Breed(id = main, name = dogBreedName(main, null), dogCeoPath = main)
+                result += CatalogBreed(id = main, name = dogBreedName(main, null), dogCeoPath = main)
             } else {
                 for (i in 0 until subs.length()) {
                     val sub = subs.getString(i)
-                    result += Breed(
+                    result += CatalogBreed(
                         id = "$main/$sub",
                         name = dogBreedName(main, sub),
                         subtitle = "กลุ่ม ${prettyWord(main)}",
@@ -98,7 +98,7 @@ object PetApiParser {
         return result.sortedBy { it.name }
     }
 
-    fun parseCatBreeds(json: String): List<Breed> {
+    fun parseCatBreeds(json: String): List<CatalogBreed> {
         val data = JSONObject(json).getJSONArray("data")
         return (0 until data.length()).map { i ->
             val b = data.getJSONObject(i)
@@ -107,7 +107,7 @@ object PetApiParser {
                 b.optString("country").takeIf { it.isNotBlank() }?.let { "ถิ่นกำเนิด $it" },
                 coatThai(b.optString("coat")),
             ).filterNotNull().joinToString(" · ")
-            Breed(id = name, name = name, subtitle = details)
+            CatalogBreed(id = name, name = name, subtitle = details)
         }.sortedBy { it.name }
     }
 

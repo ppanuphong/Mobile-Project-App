@@ -11,6 +11,7 @@ import java.time.LocalDate
  * - kind: ชื่อ [AppointmentKind]
  * - date: "yyyy-MM-dd", time: "HH:mm"
  * - status: ชื่อ [AppointmentStatus] ("PENDING" / "DONE")
+ * - species / breed: ชนิดและสายพันธุ์ ณ วันนัด (ตั้งต้นจาก Pet แต่แก้ในฟอร์มนัดได้)
  * - followUpOf: id ของนัดเดิม ถ้านัดนี้เป็นนัดติดตามผล
  * - result: ผลการรักษาที่บันทึกหลังพบหมอ (null = ยังไม่บันทึก)
  * - progress: ไทม์ไลน์ติดตามอาการหลังการรักษา เรียงตามวันที่บันทึก
@@ -26,6 +27,8 @@ data class VetAppointment(
     val vetName: String = "",
     val clinic: String = "",
     val notes: String = "",
+    val species: String = "",
+    val breed: String = "",
     val reminderDaysBefore: Int = 1,
     val status: String = AppointmentStatus.PENDING.name,
     val followUpOf: String = "",

@@ -1,10 +1,8 @@
 package com.petcare.app.ui.screens.pets
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
@@ -26,20 +23,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.petcare.app.model.SPECIES_OPTIONS
 import com.petcare.app.ui.components.AvatarColorPicker
 import com.petcare.app.ui.components.BirthdayField
+import com.petcare.app.ui.components.BreedDropdown
 import com.petcare.app.ui.components.LoadingBox
 import com.petcare.app.ui.components.PetPhotoPicker
 import com.petcare.app.ui.components.PetCareScaffold
-import com.petcare.app.ui.components.speciesEmoji
+import com.petcare.app.ui.components.SpeciesDropdown
 import com.petcare.app.ui.theme.PetCareTheme
 import com.petcare.app.viewmodel.AppViewModelProvider
 import com.petcare.app.viewmodel.PetFormViewModel
@@ -109,31 +105,21 @@ fun PetFormScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text("ชนิด *", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SPECIES_OPTIONS.forEach { option ->
-                    FilterChip(
-                        selected = state.species == option,
-                        onClick = { viewModel.onSpeciesChange(option) },
-                        label = { Text("${speciesEmoji(option)} $option") },
-                    )
-                }
-            }
-            OutlinedTextField(
+            SpeciesDropdown(
                 value = state.species,
-                onValueChange = viewModel::onSpeciesChange,
-                label = { Text("หรือพิมพ์ชนิดเอง") },
-                isError = state.speciesError != null,
-                supportingText = state.speciesError?.let { { Text(it) } },
-                singleLine = true,
+                onSelect = viewModel::onSpeciesChange,
+                label = "ชนิดสัตว์ *",
+                error = state.speciesError,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
+            BreedDropdown(
                 value = state.breed,
+                species = state.species,
+                options = state.breedOptions,
+                loading = state.breedsLoading,
+                fromApi = state.breedsFromApi,
                 onValueChange = viewModel::onBreedChange,
-                label = { Text("สายพันธุ์") },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 

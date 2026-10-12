@@ -156,6 +156,8 @@ class TreatmentResultViewModel(
 
     private fun followUpFor(appt: VetAppointment, s: TreatmentResultUiState) = VetAppointment(
         petId = appt.petId,
+        species = appt.species,
+        breed = appt.breed,
         kind = AppointmentKind.CHECKUP.name,
         title = "ติดตามผล: ${appt.title}",
         date = s.followUpDate,

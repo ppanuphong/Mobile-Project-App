@@ -52,7 +52,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.petcare.app.model.Breed
+import com.petcare.app.model.CatalogBreed
 import com.petcare.app.model.PetCategory
 import com.petcare.app.ui.components.AvatarColorPicker
 import com.petcare.app.ui.components.BirthdayField
@@ -73,7 +73,7 @@ fun PetPickerSection(
     onSelectCategory: (PetCategory) -> Unit,
     onRetryBreeds: () -> Unit,
     onBreedQueryChange: (String) -> Unit,
-    onSelectBreed: (Breed) -> Unit,
+    onSelectBreed: (CatalogBreed) -> Unit,
     onPetNameChange: (String) -> Unit,
     onBirthdayChange: (String) -> Unit,
     onAvatarColorChange: (Long) -> Unit,
@@ -234,7 +234,7 @@ private fun BreedPickerSheet(
     category: PetCategory,
     state: PetPickerState,
     onQueryChange: (String) -> Unit,
-    onSelect: (Breed) -> Unit,
+    onSelect: (CatalogBreed) -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(
@@ -266,7 +266,7 @@ private fun BreedPickerSheet(
         val breeds = state.visibleBreeds
         LazyColumn(contentPadding = PaddingValues(bottom = 24.dp), modifier = Modifier.navigationBarsPadding()) {
             if (state.breedQuery.isBlank()) {
-                item { BreedRow(Breed.UNKNOWN, selected = state.selectedBreed == Breed.UNKNOWN, onSelect) }
+                item { BreedRow(CatalogBreed.UNKNOWN, selected = state.selectedBreed == CatalogBreed.UNKNOWN, onSelect) }
                 item { HorizontalDivider(Modifier.padding(horizontal = 16.dp)) }
             }
             if (breeds.isEmpty()) {
@@ -287,7 +287,7 @@ private fun BreedPickerSheet(
 }
 
 @Composable
-private fun BreedRow(breed: Breed, selected: Boolean, onSelect: (Breed) -> Unit) {
+private fun BreedRow(breed: CatalogBreed, selected: Boolean, onSelect: (CatalogBreed) -> Unit) {
     ListItem(
         modifier = Modifier.clickable { onSelect(breed) },
         colors = ListItemDefaults.colors(

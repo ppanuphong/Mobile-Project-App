@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -18,24 +17,31 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.EventBusy
+import androidx.compose.material.icons.outlined.LocalHospital
 import androidx.compose.material.icons.outlined.MedicalInformation
+import androidx.compose.material.icons.outlined.MedicalServices
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -44,7 +50,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,6 +60,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,7 +85,6 @@ import com.petcare.app.ui.components.StatusChip
 import com.petcare.app.ui.components.colors
 import com.petcare.app.ui.components.icon
 import com.petcare.app.ui.theme.PetCareTheme
-import com.petcare.app.ui.theme.colors as statusColors
 import com.petcare.app.util.DateUtils
 import com.petcare.app.viewmodel.AppViewModelProvider
 import com.petcare.app.viewmodel.AppointmentDetailUiState
@@ -87,10 +92,15 @@ import com.petcare.app.viewmodel.AppointmentDetailViewModel
 import com.petcare.app.viewmodel.TreatmentResultViewModel
 import java.time.LocalDate
 
+/**
+ * หน้ารายละเอียดนัดหมาย: ข้อมูลนัด → ผลการรักษา → นัดติดตามผล → ไทม์ไลน์ติดตามอาการ
+ * กดดินสอเพื่อไปหน้าแก้ไขทั้งฟอร์ม
+ */
 @Composable
 fun AppointmentDetailScreen(
     onNavigateUp: () -> Unit,
     onEdit: (String) -> Unit,
+    onOpenPet: (String) -> Unit,
     onRecordResult: (String) -> Unit,
     onOpenAppointment: (String) -> Unit,
     viewModel: AppointmentDetailViewModel = viewModel(factory = AppViewModelProvider.Factory),
@@ -114,14 +124,17 @@ fun AppointmentDetailScreen(
 
     val item = state.item
     PetCareScaffold(
-        title = item?.appointment?.kindEnum?.label ?: "นัดหมาย",
-        subtitle = item?.pet?.name,
+        title = "รายละเอียดนัดหมาย",
         onNavigateUp = onNavigateUp,
         snackbarHostState = snackbar,
         actions = {
             if (item != null) {
-                IconButton(onClick = { onEdit(item.appointment.id) }) { Icon(Icons.Outlined.Edit, contentDescription = "แก้ไขนัด") }
-                IconButton(onClick = { confirmDelete = true }) { Icon(Icons.Outlined.Delete, contentDescription = "ลบนัด") }
+                IconButton(onClick = { onEdit(item.appointment.id) }) {
+                    Icon(Icons.Outlined.Edit, contentDescription = "แก้ไข")
+                }
+                IconButton(onClick = { confirmDelete = true }) {
+                    Icon(Icons.Outlined.Delete, contentDescription = "ลบ")
+                }
             }
         },
     ) { padding ->
@@ -130,18 +143,19 @@ fun AppointmentDetailScreen(
             item == null -> EmptyState(
                 icon = Icons.Outlined.EventBusy,
                 title = "ไม่พบนัดหมาย",
-                message = "นัดนี้อาจถูกลบไปแล้ว",
+                message = "นัดหมายนี้อาจถูกลบไปแล้ว",
                 modifier = Modifier.padding(padding),
             )
-            else -> DetailContent(
+            else -> AppointmentDetailContent(
                 state = state,
                 item = item,
-                padding = padding,
-                onRecordResult = { onRecordResult(item.appointment.id) },
+                onOpenPet = onOpenPet,
                 onToggleDone = viewModel::toggleDone,
+                onRecordResult = { onRecordResult(item.appointment.id) },
                 onOpenAppointment = onOpenAppointment,
                 onAddProgress = { progressSheetOpen = true },
                 onDeleteProgress = { pendingDeleteProgress = it },
+                modifier = Modifier.padding(padding),
             )
         }
     }
@@ -155,10 +169,10 @@ fun AppointmentDetailScreen(
             },
         )
     }
-    if (confirmDelete && item != null) {
+    if (confirmDelete) {
         ConfirmDialog(
             title = "ลบนัดหมายนี้?",
-            message = "\"${item.appointment.title}\" รวมถึงผลการรักษาและบันทึกอาการทั้งหมดจะถูกลบ",
+            message = "นัดหมาย การแจ้งเตือน ผลการรักษา และบันทึกอาการของนัดนี้จะถูกลบถาวร",
             confirmLabel = "ลบ",
             onConfirm = viewModel::delete,
             onDismiss = { confirmDelete = false },
@@ -176,168 +190,186 @@ fun AppointmentDetailScreen(
 }
 
 @Composable
-private fun DetailContent(
+private fun AppointmentDetailContent(
     state: AppointmentDetailUiState,
     item: AppointmentItem,
-    padding: PaddingValues,
-    onRecordResult: () -> Unit,
+    onOpenPet: (String) -> Unit,
     onToggleDone: () -> Unit,
+    onRecordResult: () -> Unit,
     onOpenAppointment: (String) -> Unit,
     onAddProgress: () -> Unit,
     onDeleteProgress: (ProgressUpdate) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val appt = item.appointment
+    val pet = item.pet
     val result = appt.result
+    val isDone = item.status == DisplayStatus.DONE
+    val outlined = CardDefaults.outlinedCardBorder()
+    val surface = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
 
-    LazyColumn(
-        modifier = Modifier
+    Column(
+        modifier
             .fillMaxSize()
-            .padding(padding),
-        contentPadding = PaddingValues(16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { InfoCard(item) }
-
-        state.parent?.let { parent ->
-            item {
-                LinkCard(
-                    label = "นัดนี้เป็นการติดตามผลจาก",
-                    title = parent.appointment.title,
-                    subtitle = DateUtils.toThaiDate(parent.appointment.date),
-                    onClick = { onOpenAppointment(parent.appointment.id) },
-                )
+        // หัวข้อนัด
+        Card(Modifier.fillMaxWidth(), colors = surface, border = outlined) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        appt.kindEnum.icon(),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(appt.kindEnum.label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                }
+                Text(appt.title, style = MaterialTheme.typography.headlineSmall)
+                if (item.status == DisplayStatus.OVERDUE || isDone) StatusChip(item.status)
             }
         }
 
-        // ยังไม่ได้บันทึกผล
-        if (result == null) {
-            item {
-                Card(colors = CardDefaults.cardColors(containerColor = PetCareTheme.colors.amberContainer)) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            if (appt.isDone) "ยังไม่ได้บันทึกผลการรักษา" else "พบหมอเสร็จแล้ว?",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = PetCareTheme.colors.onAmberContainer,
-                        )
-                        Text(
-                            "บันทึกผลวินิจฉัย การรักษา ยาที่ได้รับ และนัดติดตามผล เพื่อดูย้อนหลังและติดตามอาการต่อได้",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = PetCareTheme.colors.onAmberContainer,
-                        )
-                        Button(
-                            onClick = onRecordResult,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = PetCareTheme.colors.amber,
-                                contentColor = MaterialTheme.colorScheme.onSecondary,
-                            ),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Icon(Icons.Outlined.MedicalInformation, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("บันทึกผลการรักษา")
-                        }
-                        if (!appt.isDone) {
-                            TextButton(onClick = onToggleDone, modifier = Modifier.fillMaxWidth()) {
-                                Text("ทำเครื่องหมายว่าเสร็จ โดยไม่บันทึกผล")
-                            }
+        // สัตว์เลี้ยง
+        if (pet != null) {
+            Card(onClick = { onOpenPet(pet.id) }, modifier = Modifier.fillMaxWidth(), colors = surface, border = outlined) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                    val species = appt.species.ifBlank { pet.species }
+                    PetAvatar(species, pet.avatarColor, photo = pet.photo, size = 48.dp)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(pet.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        val kind = listOf(species, appt.breed.ifBlank { pet.breed })
+                            .filter { it.isNotBlank() }
+                            .joinToString(" · ")
+                        if (kind.isNotBlank()) {
+                            Text(
+                                kind,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
+                    Icon(
+                        Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
-        } else {
-            item { ResultCard(result, onEdit = onRecordResult) }
         }
 
-        state.followUp?.let { followUp ->
-            item { SectionHeader("นัดติดตามผล", modifier = Modifier.padding(top = 4.dp)) }
-            item {
-                AppointmentCard(
-                    item = followUp,
-                    onClick = { onOpenAppointment(followUp.appointment.id) },
-                    onToggleDone = { onOpenAppointment(followUp.appointment.id) },
+        // รายละเอียด
+        Card(Modifier.fillMaxWidth(), colors = surface, border = outlined) {
+            Column(Modifier.padding(vertical = 6.dp)) {
+                DetailRow(Icons.Outlined.CalendarMonth, "วันที่", DateUtils.toThaiDateWithDay(appt.date))
+                DetailRow(Icons.Outlined.Schedule, "เวลา", if (appt.time.isBlank()) "ไม่ระบุ" else "${appt.time} น.")
+                if (appt.vetName.isNotBlank()) DetailRow(Icons.Outlined.MedicalServices, "สัตวแพทย์", appt.vetName)
+                if (appt.clinic.isNotBlank()) DetailRow(Icons.Outlined.LocalHospital, "คลินิก / โรงพยาบาลสัตว์", appt.clinic)
+                DetailRow(
+                    Icons.Outlined.NotificationsActive,
+                    "แจ้งเตือนล่วงหน้า",
+                    if (appt.reminderDaysBefore == 0) "วันนัด" else "${appt.reminderDaysBefore} วัน",
                 )
+                if (appt.notes.isNotBlank()) DetailRow(Icons.AutoMirrored.Outlined.Notes, "บันทึกเพิ่มเติม", appt.notes)
             }
+        }
+
+        // นัดนี้เป็นนัดติดตามผลของนัดก่อนหน้า
+        state.parent?.let { parent ->
+            LinkCard(
+                label = "นัดนี้เป็นการติดตามผลจาก",
+                title = parent.appointment.title,
+                subtitle = DateUtils.toThaiDate(parent.appointment.date),
+                onClick = { onOpenAppointment(parent.appointment.id) },
+            )
+        }
+
+        // ผลการรักษา
+        if (result == null) {
+            RecordResultPrompt(isDone = isDone, onRecordResult = onRecordResult)
+        } else {
+            ResultCard(result, onEdit = onRecordResult)
+        }
+
+        // นัดติดตามผลที่สร้างจากผลการรักษานี้
+        state.followUp?.let { followUp ->
+            SectionHeader("นัดติดตามผล", modifier = Modifier.padding(top = 4.dp))
+            AppointmentCard(
+                item = followUp,
+                onClick = { onOpenAppointment(followUp.appointment.id) },
+                onToggleDone = { onOpenAppointment(followUp.appointment.id) },
+            )
         }
 
         // ไทม์ไลน์ติดตามอาการ (มีหลังบันทึกผลแล้ว)
         if (result != null) {
-            item {
-                Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("ติดตามอาการ", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    OutlinedButton(onClick = onAddProgress) {
-                        Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("อัปเดตอาการ")
-                    }
-                }
-            }
-            if (state.progress.isEmpty()) {
-                item {
-                    Text(
-                        if (result.outcomeEnum == TreatmentOutcome.ONGOING)
-                            "ยังไม่มีบันทึกอาการ กด \"อัปเดตอาการ\" เพื่อบันทึกว่าน้องเป็นอย่างไรบ้างหลังการรักษา"
-                        else "ยังไม่มีบันทึกอาการ",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            items(state.progress, key = { it.id }) { update ->
-                TimelineRow(
-                    update = update,
-                    isLast = update == state.progress.last(),
-                    onDelete = { onDeleteProgress(update) },
-                )
-            }
+            ProgressSection(
+                result = result,
+                progress = state.progress,
+                onAddProgress = onAddProgress,
+                onDeleteProgress = onDeleteProgress,
+            )
         }
 
-        if (appt.isDone) {
-            item {
-                TextButton(onClick = onToggleDone, modifier = Modifier.fillMaxWidth()) {
-                    Text("ย้ายกลับไปเป็นนัดที่รอดำเนินการ", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
+        Spacer(Modifier.height(4.dp))
+        if (isDone) {
+            OutlinedButton(onClick = onToggleDone, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                Text("ยกเลิกสถานะเสร็จ")
+            }
+        } else {
+            Button(onClick = onToggleDone, modifier = Modifier.fillMaxWidth().height(52.dp)) {
+                Icon(Icons.Outlined.CheckCircle, contentDescription = null, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(if (result == null) "ทำเครื่องหมายว่าเสร็จ (ไม่บันทึกผล)" else "ทำเครื่องหมายว่าเสร็จ")
             }
         }
     }
 }
 
 @Composable
-private fun InfoCard(item: AppointmentItem) {
-    val appt = item.appointment
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = CardDefaults.outlinedCardBorder(),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(appt.kindEnum.icon(), contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+private fun DetailRow(icon: ImageVector, label: String, value: String) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(value, style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+
+/** ชวนบันทึกผลการรักษา (ยังไม่มีผล) */
+@Composable
+private fun RecordResultPrompt(isDone: Boolean, onRecordResult: () -> Unit) {
+    Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = PetCareTheme.colors.amberContainer)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                if (isDone) "ยังไม่ได้บันทึกผลการรักษา" else "พบหมอเสร็จแล้ว?",
+                style = MaterialTheme.typography.titleMedium,
+                color = PetCareTheme.colors.onAmberContainer,
+            )
+            Text(
+                "บันทึกผลวินิจฉัย การรักษา ยาที่ได้รับ และนัดติดตามผล เพื่อดูย้อนหลังและติดตามอาการต่อได้",
+                style = MaterialTheme.typography.bodySmall,
+                color = PetCareTheme.colors.onAmberContainer,
+            )
+            Button(
+                onClick = onRecordResult,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = PetCareTheme.colors.amber,
+                    contentColor = MaterialTheme.colorScheme.onSecondary,
+                ),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Outlined.MedicalInformation, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(appt.title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                StatusChip(item.status)
-                if (item.status != DisplayStatus.DONE) {
-                    Spacer(Modifier.width(8.dp))
-                    Text(DateUtils.relativeLabel(appt.date), style = MaterialTheme.typography.labelMedium, color = item.status.statusColors().text)
-                }
-            }
-            HorizontalDivider()
-            item.pet?.let { pet ->
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    PetAvatar(pet.species, pet.avatarColor, photo = pet.photo, size = 36.dp)
-                    Spacer(Modifier.width(10.dp))
-                    Text(pet.name, style = MaterialTheme.typography.titleMedium)
-                }
-            }
-            InfoLine("วันที่", buildString {
-                append(DateUtils.toThaiDateWithDay(appt.date))
-                if (appt.time.isNotBlank()) append(" เวลา ${appt.time} น.")
-            })
-            if (appt.clinic.isNotBlank()) InfoLine("คลินิก", appt.clinic)
-            if (appt.vetName.isNotBlank()) InfoLine("สัตวแพทย์", appt.vetName)
-            if (appt.notes.isNotBlank()) InfoLine("บันทึก", appt.notes)
-            if (!appt.isDone) {
-                InfoLine("แจ้งเตือน", if (appt.reminderDaysBefore == 0) "วันนัด" else "ล่วงหน้า ${appt.reminderDaysBefore} วัน")
+                Text("บันทึกผลการรักษา")
             }
         }
     }
@@ -346,6 +378,7 @@ private fun InfoCard(item: AppointmentItem) {
 @Composable
 private fun ResultCard(result: TreatmentResult, onEdit: () -> Unit) {
     Card(
+        Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = CardDefaults.outlinedCardBorder(),
     ) {
@@ -395,6 +428,7 @@ private fun InfoLine(label: String, value: String, modifier: Modifier = Modifier
 private fun LinkCard(label: String, title: String, subtitle: String, onClick: () -> Unit) {
     Card(
         onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -404,6 +438,37 @@ private fun LinkCard(label: String, title: String, subtitle: String, onClick: ()
                 Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
             }
             Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+        }
+    }
+}
+
+@Composable
+private fun ProgressSection(
+    result: TreatmentResult,
+    progress: List<ProgressUpdate>,
+    onAddProgress: () -> Unit,
+    onDeleteProgress: (ProgressUpdate) -> Unit,
+) {
+    Column {
+        Row(Modifier.padding(top = 4.dp, bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text("ติดตามอาการ", style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            OutlinedButton(onClick = onAddProgress) {
+                Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("อัปเดตอาการ")
+            }
+        }
+        if (progress.isEmpty()) {
+            Text(
+                if (result.outcomeEnum == TreatmentOutcome.ONGOING)
+                    "ยังไม่มีบันทึกอาการ กด \"อัปเดตอาการ\" เพื่อบันทึกว่าน้องเป็นอย่างไรบ้างหลังการรักษา"
+                else "ยังไม่มีบันทึกอาการ",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        progress.forEachIndexed { index, update ->
+            TimelineRow(update = update, isLast = index == progress.lastIndex, onDelete = { onDeleteProgress(update) })
         }
     }
 }

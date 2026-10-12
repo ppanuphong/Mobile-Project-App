@@ -9,7 +9,7 @@ import com.petcare.app.data.PetCatalogRepository
 import com.petcare.app.data.PetPhotoProcessor
 import com.petcare.app.data.PetRepository
 import com.petcare.app.model.AVATAR_COLORS
-import com.petcare.app.model.Breed
+import com.petcare.app.model.CatalogBreed
 import com.petcare.app.model.Pet
 import com.petcare.app.model.PetCategory
 import com.petcare.app.model.User
@@ -28,9 +28,9 @@ data class PetPickerState(
     val selectedCategory: PetCategory? = null,
     val breedsLoading: Boolean = false,
     val breedsError: String? = null,
-    val breeds: List<Breed> = emptyList(),
+    val breeds: List<CatalogBreed> = emptyList(),
     val breedQuery: String = "",
-    val selectedBreed: Breed? = null,
+    val selectedBreed: CatalogBreed? = null,
     val breedImageUrl: String? = null,
     val petName: String = "",
     val birthday: String = "",
@@ -39,7 +39,7 @@ data class PetPickerState(
     val isProcessingPhoto: Boolean = false,
 ) {
     /** สายพันธุ์ที่ตรงกับคำค้น (ค้นทั้งชื่อและคำอธิบาย) */
-    val visibleBreeds: List<Breed>
+    val visibleBreeds: List<CatalogBreed>
         get() = if (breedQuery.isBlank()) breeds else breeds.filter {
             it.name.contains(breedQuery, ignoreCase = true) || it.subtitle.contains(breedQuery, ignoreCase = true)
         }
@@ -138,7 +138,7 @@ class RegisterViewModel(
 
     fun onBreedQueryChange(v: String) = updatePet { copy(breedQuery = v) }
 
-    fun selectBreed(breed: Breed) {
+    fun selectBreed(breed: CatalogBreed) {
         updatePet { copy(selectedBreed = breed, breedImageUrl = null, breedQuery = "") }
         imageJob?.cancel()
         if (breed.dogCeoPath != null) {
@@ -236,7 +236,7 @@ class RegisterViewModel(
 
     private fun firstPetOf(picker: PetPickerState): Pet? {
         val category = picker.selectedCategory ?: return null
-        val breed = picker.selectedBreed?.takeIf { it != Breed.UNKNOWN }
+        val breed = picker.selectedBreed?.takeIf { it != CatalogBreed.UNKNOWN }
         return Pet(
             name = picker.petName.trim(),
             species = breed?.species ?: category.name,
