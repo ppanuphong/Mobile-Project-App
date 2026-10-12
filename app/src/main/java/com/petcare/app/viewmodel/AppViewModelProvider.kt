@@ -25,13 +25,23 @@ object AppViewModelProvider {
             HomeViewModel(container().petRepository, container().appointmentRepository, container().sessionManager)
         }
         initializer { PetViewModel(container().petRepository, container().appointmentRepository) }
-        initializer { PetFormViewModel(createSavedStateHandle(), container().petRepository) }
+        initializer {
+            PetFormViewModel(createSavedStateHandle(), container().petRepository, container().breedRepository)
+        }
         initializer {
             PetDetailViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
         }
         initializer { AppointmentViewModel(container().petRepository, container().appointmentRepository) }
         initializer {
-            AppointmentFormViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
+            AppointmentFormViewModel(
+                createSavedStateHandle(),
+                container().petRepository,
+                container().appointmentRepository,
+                container().breedRepository,
+            )
+        }
+        initializer {
+            AppointmentDetailViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
         }
         initializer {
             NotificationViewModel(container().petRepository, container().appointmentRepository, container().sessionManager)

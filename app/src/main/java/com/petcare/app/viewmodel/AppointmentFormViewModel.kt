@@ -4,13 +4,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.petcare.app.data.AppointmentRepository
+import com.petcare.app.data.BreedRepository
 import com.petcare.app.data.PetRepository
 import com.petcare.app.model.AppointmentKind
 import com.petcare.app.model.AppointmentStatus
+import com.petcare.app.model.Breed
 import com.petcare.app.model.Pet
 import com.petcare.app.model.VetAppointment
 import com.petcare.app.ui.navigation.Routes
 import com.petcare.app.util.DateUtils
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,6 +28,12 @@ data class AppointmentFormUiState(
     val isLoading: Boolean = true,
     val pets: List<Pet> = emptyList(),
     val petId: String = "",
+    val species: String = "",
+    val breed: String = "",
+    val breedOptions: List<Breed> = emptyList(),
+    val breedsLoading: Boolean = false,
+    /** false = ใช้รายการพื้นฐานในเครื่อง (ออฟไลน์ หรือชนิดที่ไม่มี API) */
+    val breedsFromApi: Boolean = false,
     val kind: AppointmentKind = AppointmentKind.VACCINE,
     val title: String = "",
     val date: String = DateUtils.formatDate(LocalDate.now().plusDays(7)),
@@ -45,12 +54,14 @@ class AppointmentFormViewModel(
     savedStateHandle: SavedStateHandle,
     private val petRepository: PetRepository,
     private val appointmentRepository: AppointmentRepository,
+    private val breedRepository: BreedRepository,
 ) : ViewModel() {
 
     private val appointmentId: String? =
         savedStateHandle.get<String>(Routes.ARG_APPOINTMENT_ID)?.takeIf { it.isNotBlank() }
     private val presetPetId: String? = savedStateHandle.get<String>(Routes.ARG_PET_ID)?.takeIf { it.isNotBlank() }
     private var original: VetAppointment? = null
+    private var breedJob: Job? = null
 
     private val _uiState = MutableStateFlow(AppointmentFormUiState(isEdit = appointmentId != null))
     val uiState: StateFlow<AppointmentFormUiState> = _uiState.asStateFlow()
@@ -61,25 +72,49 @@ class AppointmentFormViewModel(
             val existing = appointmentId?.let { appointmentRepository.observeAppointment(it).firstOrNull() }
             original = existing
             _uiState.update { s ->
-                if (existing != null) s.copy(
-                    isLoading = false,
-                    pets = pets,
-                    petId = existing.petId,
-                    kind = existing.kindEnum,
-                    title = existing.title,
-                    date = existing.date,
-                    time = existing.time,
-                    vetName = existing.vetName,
-                    clinic = existing.clinic,
-                    notes = existing.notes,
-                    reminderDaysBefore = existing.reminderDaysBefore,
-                    isDone = existing.isDone,
-                ) else s.copy(
-                    isLoading = false,
-                    pets = pets,
-                    petId = presetPetId ?: pets.firstOrNull()?.id.orEmpty(),
-                    errorMessage = if (appointmentId != null) "ไม่พบนัดหมายนี้" else null,
-                )
+                if (existing != null) {
+                    // นัดเก่าที่ยังไม่มีชนิด/พันธุ์ ใช้ข้อมูลจากสัตว์เลี้ยงแทน
+                    val pet = pets.firstOrNull { it.id == existing.petId }
+                    s.copy(
+                        isLoading = false,
+                        pets = pets,
+                        petId = existing.petId,
+                        species = existing.species.ifBlank { pet?.species.orEmpty() },
+                        breed = existing.breed.ifBlank { pet?.breed.orEmpty() },
+                        kind = existing.kindEnum,
+                        title = existing.title,
+                        date = existing.date,
+                        time = existing.time,
+                        vetName = existing.vetName,
+                        clinic = existing.clinic,
+                        notes = existing.notes,
+                        reminderDaysBefore = existing.reminderDaysBefore,
+                        isDone = existing.isDone,
+                    )
+                } else {
+                    val pet = pets.firstOrNull { it.id == presetPetId } ?: pets.firstOrNull()
+                    s.copy(
+                        isLoading = false,
+                        pets = pets,
+                        petId = pet?.id.orEmpty(),
+                        species = pet?.species.orEmpty(),
+                        breed = pet?.breed.orEmpty(),
+                        errorMessage = if (appointmentId != null) "ไม่พบนัดหมายนี้" else null,
+                    )
+                }
+            }
+            loadBreeds(_uiState.value.species)
+        }
+    }
+
+    /** โหลดรายชื่อพันธุ์ของชนิดที่เลือก ยกเลิกงานเก่าเพื่อไม่ให้ผลช้าเขียนทับผลใหม่ */
+    private fun loadBreeds(species: String) {
+        breedJob?.cancel()
+        _uiState.update { it.copy(breedsLoading = true) }
+        breedJob = viewModelScope.launch {
+            val result = breedRepository.breedsFor(species)
+            _uiState.update {
+                it.copy(breedOptions = result.breeds, breedsFromApi = result.fromApi, breedsLoading = false)
             }
         }
     }
@@ -87,7 +122,23 @@ class AppointmentFormViewModel(
     private fun edit(field: String, change: AppointmentFormUiState.() -> AppointmentFormUiState) =
         _uiState.update { it.change().copy(errors = it.errors - field) }
 
-    fun onPetChange(v: String) = edit(FIELD_PET) { copy(petId = v) }
+    /** เลือกสัตว์แล้วดึงชนิด/พันธุ์ของตัวนั้นมาเติมให้ (แก้ต่อได้) */
+    fun onPetChange(v: String) {
+        val pet = _uiState.value.pets.firstOrNull { it.id == v }
+        val speciesChanged = pet != null && pet.species != _uiState.value.species
+        edit(FIELD_PET) {
+            if (pet == null) copy(petId = v) else copy(petId = v, species = pet.species, breed = pet.breed)
+        }
+        if (speciesChanged) loadBreeds(pet!!.species)
+    }
+
+    fun onSpeciesChange(v: String) {
+        if (v == _uiState.value.species) return
+        edit(FIELD_SPECIES) { copy(species = v, breed = "") }
+        loadBreeds(v)
+    }
+
+    fun onBreedChange(v: String) = edit(FIELD_BREED) { copy(breed = v) }
     fun onKindChange(v: AppointmentKind) = edit(FIELD_KIND) { copy(kind = v) }
     fun onTitleChange(v: String) = edit(FIELD_TITLE) { copy(title = v) }
     fun onDateChange(v: String) = edit(FIELD_DATE) { copy(date = v) }
@@ -122,6 +173,8 @@ class AppointmentFormViewModel(
             vetName = s.vetName.trim(),
             clinic = s.clinic.trim(),
             notes = s.notes.trim(),
+            species = s.species.trim(),
+            breed = s.breed.trim(),
             reminderDaysBefore = s.reminderDaysBefore,
             status = if (s.isDone) AppointmentStatus.DONE.name else AppointmentStatus.PENDING.name,
         )
@@ -146,6 +199,8 @@ class AppointmentFormViewModel(
 
     companion object {
         const val FIELD_PET = "pet"
+        const val FIELD_SPECIES = "species"
+        const val FIELD_BREED = "breed"
         const val FIELD_KIND = "kind"
         const val FIELD_TITLE = "title"
         const val FIELD_DATE = "date"

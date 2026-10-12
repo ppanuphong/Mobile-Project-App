@@ -5,17 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.EventAvailable
@@ -172,29 +170,15 @@ fun HomeScreen(
                     modifier = Modifier.padding(top = 8.dp),
                 )
             }
+            items(state.pets, key = { "p_" + it.pet.id }) { summary ->
+                PetMiniCard(summary, onClick = { onOpenPet(summary.pet.id) })
+            }
             item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(state.pets, key = { it.pet.id }) { summary ->
-                        PetMiniCard(summary, onClick = { onOpenPet(summary.pet.id) })
-                    }
-                    item {
-                        OutlinedCard(
-                            onClick = onAddPet,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(156.dp),
-                        ) {
-                            Column(
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-                                Icon(Icons.Outlined.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                                Text("เพิ่ม", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                            }
-                        }
+                OutlinedCard(onClick = onAddPet, modifier = Modifier.fillMaxWidth()) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(12.dp))
+                        Text("เพิ่มสัตว์เลี้ยง", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }
@@ -228,46 +212,58 @@ private fun StatTile(label: String, value: Int, color: Color, container: Color, 
 
 @Composable
 private fun PetMiniCard(summary: PetSummary, onClick: () -> Unit) {
+    val pet = summary.pet
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .width(140.dp)
-            .height(156.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = CardDefaults.outlinedCardBorder(),
     ) {
-        Column(
-            Modifier
-                .fillMaxHeight()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            PetAvatar(summary.pet.species, summary.pet.avatarColor, size = 44.dp)
-            Text(
-                summary.pet.name,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            val next = summary.nextAppointment
-            when {
-                summary.overdueCount > 0 -> Text(
-                    "เลยกำหนด ${summary.overdueCount} นัด",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = PetCareTheme.colors.rust,
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            PetAvatar(pet.species, pet.avatarColor, size = 52.dp)
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    pet.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                next != null -> Text(
-                    "นัดถัดไป ${DateUtils.relativeLabel(next.appointment.date)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                )
-                else -> Text(
-                    "ไม่มีนัดค้าง",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                val kind = listOf(pet.species, pet.breed).filter { it.isNotBlank() }.joinToString(" · ")
+                if (kind.isNotBlank()) {
+                    Text(
+                        kind,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                val next = summary.nextAppointment
+                when {
+                    summary.overdueCount > 0 -> Text(
+                        "เลยกำหนด ${summary.overdueCount} นัด",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = PetCareTheme.colors.rust,
+                    )
+                    next != null -> Text(
+                        "นัดถัดไป ${DateUtils.toThaiDateWithDay(next.appointment.date)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
+                    else -> Text(
+                        "ไม่มีนัดค้าง",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
+            Icon(
+                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

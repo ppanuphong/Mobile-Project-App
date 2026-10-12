@@ -8,6 +8,7 @@ import com.google.firebase.firestore.firestoreSettings
 import com.petcare.app.BuildConfig
 import com.petcare.app.data.AppointmentRepository
 import com.petcare.app.data.AuthRepository
+import com.petcare.app.data.BreedRepository
 import com.petcare.app.data.DemoDataSeeder
 import com.petcare.app.data.PetRepository
 import com.petcare.app.data.SessionManager
@@ -37,6 +38,7 @@ class AppContainer(context: Context) {
     val reminderScheduler = ReminderScheduler(context)
 
     val userRepository by lazy { UserRepository(firestore) }
+    val breedRepository by lazy { BreedRepository() }
     val petRepository by lazy { PetRepository(firestore, auth, reminderScheduler) }
     val appointmentRepository by lazy { AppointmentRepository(firestore, auth, reminderScheduler) }
     val authRepository by lazy {

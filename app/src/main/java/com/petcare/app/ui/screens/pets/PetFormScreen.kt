@@ -22,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -43,12 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.petcare.app.model.AVATAR_COLORS
-import com.petcare.app.model.SPECIES_OPTIONS
+import com.petcare.app.ui.components.BreedDropdown
 import com.petcare.app.ui.components.DatePickerField
 import com.petcare.app.ui.components.LoadingBox
 import com.petcare.app.ui.components.PetAvatar
 import com.petcare.app.ui.components.PetCareScaffold
-import com.petcare.app.ui.components.speciesEmoji
+import com.petcare.app.ui.components.SpeciesDropdown
 import com.petcare.app.ui.theme.PetCareTheme
 import com.petcare.app.util.DateUtils
 import com.petcare.app.viewmodel.AppViewModelProvider
@@ -133,31 +132,21 @@ fun PetFormScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Text("ชนิด *", style = MaterialTheme.typography.labelLarge)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SPECIES_OPTIONS.forEach { option ->
-                    FilterChip(
-                        selected = state.species == option,
-                        onClick = { viewModel.onSpeciesChange(option) },
-                        label = { Text("${speciesEmoji(option)} $option") },
-                    )
-                }
-            }
-            OutlinedTextField(
+            SpeciesDropdown(
                 value = state.species,
-                onValueChange = viewModel::onSpeciesChange,
-                label = { Text("หรือพิมพ์ชนิดเอง") },
-                isError = state.speciesError != null,
-                supportingText = state.speciesError?.let { { Text(it) } },
-                singleLine = true,
+                onSelect = viewModel::onSpeciesChange,
+                label = "ชนิดสัตว์ *",
+                error = state.speciesError,
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            OutlinedTextField(
+            BreedDropdown(
                 value = state.breed,
+                species = state.species,
+                options = state.breedOptions,
+                loading = state.breedsLoading,
+                fromApi = state.breedsFromApi,
                 onValueChange = viewModel::onBreedChange,
-                label = { Text("สายพันธุ์") },
-                singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
 

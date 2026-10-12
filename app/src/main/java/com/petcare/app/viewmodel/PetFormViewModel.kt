@@ -3,11 +3,15 @@ package com.petcare.app.viewmodel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.petcare.app.data.BreedRepository
 import com.petcare.app.data.PetRepository
 import com.petcare.app.model.AVATAR_COLORS
+import com.petcare.app.model.Breed
+import com.petcare.app.model.BreedGroup
 import com.petcare.app.model.Pet
 import com.petcare.app.ui.navigation.Routes
 import com.petcare.app.util.DateUtils
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +26,10 @@ data class PetFormUiState(
     val name: String = "",
     val species: String = "สุนัข",
     val breed: String = "",
+    val breedOptions: List<Breed> = emptyList(),
+    val breedsLoading: Boolean = false,
+    /** false = ใช้รายการพื้นฐานในเครื่อง (ออฟไลน์ หรือชนิดที่ไม่มี API) */
+    val breedsFromApi: Boolean = false,
     val birthday: String = "",
     val avatarColor: Long = AVATAR_COLORS.first(),
     val nameError: String? = null,
@@ -36,10 +44,12 @@ data class PetFormUiState(
 class PetFormViewModel(
     savedStateHandle: SavedStateHandle,
     private val petRepository: PetRepository,
+    private val breedRepository: BreedRepository,
 ) : ViewModel() {
 
     private val petId: String? = savedStateHandle.get<String>(Routes.ARG_PET_ID)?.takeIf { it.isNotBlank() }
     private var original: Pet? = null
+    private var breedJob: Job? = null
 
     private val _uiState = MutableStateFlow(PetFormUiState(isEdit = petId != null, isLoading = petId != null))
     val uiState: StateFlow<PetFormUiState> = _uiState.asStateFlow()
@@ -60,14 +70,40 @@ class PetFormViewModel(
                         avatarColor = pet.avatarColor,
                     )
                 }
+                loadBreeds(_uiState.value.species)
             }
         } else {
             _uiState.update { it.copy(avatarColor = AVATAR_COLORS.random()) }
+            loadBreeds(_uiState.value.species)
+        }
+    }
+
+    /** โหลดรายชื่อพันธุ์ของชนิดที่เลือก ยกเลิกงานเก่าเพื่อไม่ให้ผลช้าเขียนทับผลใหม่ */
+    private fun loadBreeds(species: String) {
+        breedJob?.cancel()
+        _uiState.update { it.copy(breedsLoading = true) }
+        breedJob = viewModelScope.launch {
+            val result = breedRepository.breedsFor(species)
+            _uiState.update {
+                it.copy(breedOptions = result.breeds, breedsFromApi = result.fromApi, breedsLoading = false)
+            }
         }
     }
 
     fun onNameChange(v: String) = _uiState.update { it.copy(name = v, nameError = null) }
-    fun onSpeciesChange(v: String) = _uiState.update { it.copy(species = v, speciesError = null) }
+
+    /**
+     * ช่องพิมพ์ชนิดเองเรียกทุกครั้งที่กดแป้น จึงล้างพันธุ์และโหลดรายการใหม่
+     * เฉพาะตอนกลุ่มชนิดเปลี่ยนจริง (เช่น สุนัข → แมว) ไม่ใช่ระหว่างพิมพ์ "สุนั" → "สุนัข"
+     */
+    fun onSpeciesChange(v: String) {
+        val groupChanged = BreedGroup.fromSpecies(v) != BreedGroup.fromSpecies(_uiState.value.species)
+        _uiState.update {
+            if (groupChanged) it.copy(species = v, breed = "", speciesError = null)
+            else it.copy(species = v, speciesError = null)
+        }
+        if (groupChanged) loadBreeds(v)
+    }
     fun onBreedChange(v: String) = _uiState.update { it.copy(breed = v) }
     fun onBirthdayChange(v: String) = _uiState.update { it.copy(birthday = v, birthdayError = null) }
     fun onColorChange(v: Long) = _uiState.update { it.copy(avatarColor = v) }
