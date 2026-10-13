@@ -59,6 +59,23 @@ object AppViewModelProvider {
             TreatmentResultViewModel(createSavedStateHandle(), container().petRepository, container().appointmentRepository)
         }
         initializer {
+            ProfileViewModel(
+                container().authRepository,
+                container().userRepository,
+                container().petRepository,
+                container().appointmentRepository,
+                container().sessionManager,
+            )
+        }
+        initializer {
+            ProfileEditViewModel(
+                container().authRepository,
+                container().userRepository,
+                container().sessionManager,
+                container().petPhotoProcessor,
+            )
+        }
+        initializer {
             NotificationViewModel(container().petRepository, container().appointmentRepository, container().sessionManager)
         }
     }

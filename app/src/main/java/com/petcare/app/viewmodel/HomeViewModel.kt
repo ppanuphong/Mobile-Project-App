@@ -6,6 +6,8 @@ import com.petcare.app.data.AppointmentRepository
 import com.petcare.app.data.PetRepository
 import com.petcare.app.data.SessionManager
 import com.petcare.app.model.AppointmentItem
+import com.petcare.app.model.CareTip
+import com.petcare.app.model.CareTipEngine
 import com.petcare.app.model.DisplayStatus
 import com.petcare.app.model.Pet
 import com.petcare.app.model.withPets
@@ -16,8 +18,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-data class PetSummary(val pet: Pet, val nextAppointment: AppointmentItem?, val overdueCount: Int)
-
 data class HomeUiState(
     val isLoading: Boolean = true,
     val userName: String = "",
@@ -25,7 +25,9 @@ data class HomeUiState(
     val dueSoon: List<AppointmentItem> = emptyList(),
     /** เคสที่ยังอยู่ระหว่างรักษา ต้องติดตามอาการ */
     val underTreatment: List<AppointmentItem> = emptyList(),
-    val pets: List<PetSummary> = emptyList(),
+    val pets: List<Pet> = emptyList(),
+    /** เคล็ดลับตามสายพันธุ์และฤดูกาล (การ์ดหมุนเวียนในหน้าหลัก) */
+    val tips: List<CareTip> = emptyList(),
     val doneThisMonth: Int = 0,
 )
 
@@ -49,14 +51,8 @@ class HomeViewModel(
             overdue = pending.filter { it.status == DisplayStatus.OVERDUE }.sortedByDescending { it.appointment.date },
             dueSoon = pending.filter { it.status == DisplayStatus.DUE_SOON },
             underTreatment = items.filter { it.appointment.isUnderTreatment }.sortedByDescending { it.appointment.date },
-            pets = pets.map { pet ->
-                val mine = pending.filter { it.appointment.petId == pet.id }
-                PetSummary(
-                    pet = pet,
-                    nextAppointment = mine.firstOrNull { it.status != DisplayStatus.OVERDUE },
-                    overdueCount = mine.count { it.status == DisplayStatus.OVERDUE },
-                )
-            },
+            pets = pets,
+            tips = CareTipEngine.tipsFor(pets),
             doneThisMonth = items.count { it.status == DisplayStatus.DONE && it.appointment.date.startsWith(monthPrefix) },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())

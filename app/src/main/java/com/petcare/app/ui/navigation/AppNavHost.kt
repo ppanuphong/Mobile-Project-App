@@ -44,6 +44,8 @@ import com.petcare.app.ui.screens.notifications.NotificationScreen
 import com.petcare.app.ui.screens.pets.PetDetailScreen
 import com.petcare.app.ui.screens.pets.PetFormScreen
 import com.petcare.app.ui.screens.pets.PetListScreen
+import com.petcare.app.ui.screens.profile.ProfileEditScreen
+import com.petcare.app.ui.screens.profile.ProfileScreen
 import com.petcare.app.ui.theme.PetCareTheme
 import com.petcare.app.viewmodel.AppViewModelProvider
 import com.petcare.app.viewmodel.AuthState
@@ -90,10 +92,15 @@ fun AppNavHost(
         }
     }
 
-    // เปิดจาก Notification → ไปแท็บแจ้งเตือน
+    // เปิดจาก Notification → ไปหน้าแจ้งเตือน (อยู่ใต้แท็บโปรไฟล์)
     LaunchedEffect(openTab, authState) {
         if (openTab != null && authState == AuthState.LOGGED_IN) {
-            navController.navigateToTab(openTab)
+            if (openTab == Routes.NOTIFICATIONS) {
+                navController.navigateToTab(Routes.PROFILE)
+                navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
+            } else {
+                navController.navigateToTab(openTab)
+            }
             onTabOpened()
         }
     }
@@ -136,12 +143,10 @@ fun AppNavHost(
 
             composable(Routes.HOME) {
                 HomeScreen(
-                    onOpenPet = { navController.navigate(Routes.petDetail(it)) },
                     onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                     onAddPet = { navController.navigate(Routes.petForm()) },
                     onAddAppointment = { navController.navigate(Routes.appointmentForm()) },
                     onSeeAllAppointments = { navController.navigateToTab(Routes.APPOINTMENTS) },
-                    onLogout = sessionViewModel::logout,
                 )
             }
             composable(Routes.PETS) {
@@ -158,8 +163,22 @@ fun AppNavHost(
                     onAddPet = { navController.navigate(Routes.petForm()) },
                 )
             }
+            composable(Routes.PROFILE) {
+                ProfileScreen(
+                    onEditProfile = { navController.navigate(Routes.PROFILE_EDIT) },
+                    onAddPet = { navController.navigate(Routes.petForm()) },
+                    onOpenPet = { navController.navigate(Routes.petDetail(it)) },
+                    onSeeAllPets = { navController.navigateToTab(Routes.PETS) },
+                    onOpenNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
+                    onLogout = sessionViewModel::logout,
+                )
+            }
+            composable(Routes.PROFILE_EDIT) {
+                ProfileEditScreen(onDone = { navController.navigateUp() })
+            }
             composable(Routes.NOTIFICATIONS) {
                 NotificationScreen(
+                    onNavigateUp = { navController.navigateUp() },
                     onOpenAppointment = { navController.navigate(Routes.appointmentDetail(it)) },
                 )
             }
@@ -240,7 +259,7 @@ private fun BottomBar(
                 selected = selected,
                 onClick = { if (!selected) onSelect(tab) },
                 icon = {
-                    BadgedBox(badge = { if (tab == TopLevelTab.NOTIFICATIONS && notificationBadge) Badge() }) {
+                    BadgedBox(badge = { if (tab == TopLevelTab.PROFILE && notificationBadge) Badge() }) {
                         Icon(if (selected) tab.selectedIcon else tab.icon, contentDescription = null)
                     }
                 },

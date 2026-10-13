@@ -61,6 +61,7 @@ import com.petcare.app.viewmodel.ScheduledReminder
 
 @Composable
 fun NotificationScreen(
+    onNavigateUp: () -> Unit,
     onOpenAppointment: (String) -> Unit,
     viewModel: NotificationViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
@@ -87,7 +88,7 @@ fun NotificationScreen(
         }
     }
 
-    PetCareScaffold(title = "แจ้งเตือน", isTabScreen = true) { padding ->
+    PetCareScaffold(title = "การแจ้งเตือน", onNavigateUp = onNavigateUp) { padding ->
         if (state.isLoading) {
             LoadingBox(Modifier.padding(padding))
             return@PetCareScaffold

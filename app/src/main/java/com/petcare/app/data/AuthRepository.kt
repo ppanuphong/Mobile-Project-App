@@ -65,6 +65,22 @@ class AuthRepository(
         return if (created.isSuccess) created else result
     }
 
+    val currentUserId: String?
+        get() = auth.currentUser?.uid
+
+    /** วันที่สมัครสมาชิก (เวลาที่ Firebase Auth สร้างบัญชี) */
+    val memberSinceMillis: Long?
+        get() = auth.currentUser?.metadata?.creationTimestamp
+
+    /** ส่งอีเมลตั้งรหัสผ่านใหม่ (ลิงก์จาก Firebase) */
+    suspend fun sendPasswordReset(email: String): Result<Unit> =
+        try {
+            auth.sendPasswordResetEmail(email).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception(thaiMessage(e), e))
+        }
+
     suspend fun logout() {
         reminderScheduler.cancelAll()
         auth.signOut()

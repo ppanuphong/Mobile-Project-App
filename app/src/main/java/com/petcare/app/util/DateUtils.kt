@@ -1,8 +1,10 @@
 package com.petcare.app.util
 
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.Period
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
@@ -55,6 +57,17 @@ object DateUtils {
             days == -1L -> "เมื่อวาน"
             else -> "เลยมา ${-days} วัน"
         }
+    }
+
+    private val THAI_MONTHS_FULL = listOf(
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม",
+    )
+
+    /** เวลาแบบ epoch millis → "ตุลาคม 2569" (ใช้กับ "เป็นสมาชิกตั้งแต่") */
+    fun thaiMonthYear(epochMillis: Long, zone: ZoneId = ZoneId.systemDefault()): String {
+        val d = Instant.ofEpochMilli(epochMillis).atZone(zone).toLocalDate()
+        return "${THAI_MONTHS_FULL[d.monthValue - 1]} ${d.year + 543}"
     }
 
     /** ข้อความบอกว่าผ่านมานานแค่ไหน เช่น "วันนี้", "เมื่อวาน", "3 วันก่อน" */

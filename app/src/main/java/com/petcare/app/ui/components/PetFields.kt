@@ -1,11 +1,6 @@
 package com.petcare.app.ui.components
 
-import android.content.ActivityNotFoundException
 import android.net.Uri
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,23 +25,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import com.petcare.app.model.AVATAR_COLORS
 import com.petcare.app.ui.theme.PetCareTheme
 import com.petcare.app.util.DateUtils
-import java.io.File
 
 /** ช่องฟอร์มที่ใช้ร่วมกันระหว่างหน้า "เพิ่มสัตว์เลี้ยง" และส่วนเลือกสัตว์เลี้ยงตอนสมัครสมาชิก */
 
@@ -78,8 +65,7 @@ fun AvatarColorPicker(selected: Long, onSelect: (Long) -> Unit, modifier: Modifi
 }
 
 /**
- * รูปโปรไฟล์ + ปุ่มเลือกรูปจากคลังภาพ / ถ่ายรูป / ลบรูป
- * ไม่ต้องขอสิทธิ์ใด ๆ: Photo Picker ของระบบ และแอปกล้องผ่าน FileProvider
+ * รูปสัตว์เลี้ยง + ปุ่มเลือกรูปจากคลังภาพ / ถ่ายรูป / ลบรูป (ดู [rememberImagePicker])
  */
 @Composable
 fun PetPhotoPicker(
@@ -92,32 +78,9 @@ fun PetPhotoPicker(
     modifier: Modifier = Modifier,
     size: Dp = 96.dp,
 ) {
-    val context = LocalContext.current
-    val gallery = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let(onPhotoPicked)
-    }
-    // เก็บเป็น String เพื่อให้รอดตอนหมุนจอ/ระบบปิดแอประหว่างเปิดกล้อง
-    var cameraUri by rememberSaveable { mutableStateOf<String?>(null) }
-    val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { saved ->
-        if (saved) cameraUri?.let { onPhotoPicked(it.toUri()) }
-    }
-    val pickFromGallery = {
-        gallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-    }
-    val takePhoto = {
-        val dir = File(context.cacheDir, "camera").apply { mkdirs() }
-        val uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.fileprovider",
-            File.createTempFile("pet_", ".jpg", dir),
-        )
-        cameraUri = uri.toString()
-        try {
-            camera.launch(uri)
-        } catch (_: ActivityNotFoundException) {
-            Toast.makeText(context, "ไม่พบแอปกล้องในเครื่องนี้", Toast.LENGTH_SHORT).show()
-        }
-    }
+    val picker = rememberImagePicker(onPhotoPicked)
+    val pickFromGallery = picker.pickFromGallery
+    val takePhoto = picker.takePhoto
 
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Box(contentAlignment = Alignment.Center) {

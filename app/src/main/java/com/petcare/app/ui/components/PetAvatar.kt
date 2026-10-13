@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,7 +17,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import java.util.Base64
 
 /** อีโมจิตามชนิดสัตว์ ถ้าไม่รู้จักใช้อุ้งเท้า */
 fun speciesEmoji(species: String): String = when {
@@ -50,9 +48,7 @@ fun PetAvatar(
     photo: String = "",
     size: Dp = 48.dp,
 ) {
-    val bytes = remember(photo) {
-        photo.takeIf { it.isNotBlank() }?.let { runCatching { Base64.getDecoder().decode(it) }.getOrNull() }
-    }
+    val bytes = rememberPhotoBytes(photo)
     Box(
         modifier = modifier
             .size(size)

@@ -3,11 +3,11 @@ package com.petcare.app.ui.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Pets
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -21,7 +21,11 @@ object Routes {
     const val HOME = "home"
     const val PETS = "pets"
     const val APPOINTMENTS = "appointments"
+    const val PROFILE = "profile"
+
+    /** หน้าย่อยในโปรไฟล์ (ไม่ใช่แท็บแล้ว) */
     const val NOTIFICATIONS = "notifications"
+    const val PROFILE_EDIT = "profile_edit"
 
     const val PET_DETAIL = "pet/{$ARG_PET_ID}"
     const val PET_FORM = "pet_form?$ARG_PET_ID={$ARG_PET_ID}"
@@ -53,5 +57,5 @@ enum class TopLevelTab(
     HOME(Routes.HOME, "หน้าหลัก", Icons.Filled.Home, Icons.Outlined.Home),
     PETS(Routes.PETS, "สัตว์เลี้ยง", Icons.Filled.Pets, Icons.Outlined.Pets),
     APPOINTMENTS(Routes.APPOINTMENTS, "นัดหมาย", Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth),
-    NOTIFICATIONS(Routes.NOTIFICATIONS, "แจ้งเตือน", Icons.Filled.Notifications, Icons.Outlined.Notifications),
+    PROFILE(Routes.PROFILE, "โปรไฟล์", Icons.Filled.Person, Icons.Outlined.Person),
 }

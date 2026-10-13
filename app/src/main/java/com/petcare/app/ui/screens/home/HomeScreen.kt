@@ -13,8 +13,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.Pets
@@ -22,15 +20,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,8 +34,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.petcare.app.model.AppointmentItem
 import com.petcare.app.ui.components.AppointmentCard
+import com.petcare.app.ui.components.CareTipCard
 import com.petcare.app.ui.components.ConditionChip
-import com.petcare.app.ui.components.ConfirmDialog
 import com.petcare.app.ui.components.EmptyState
 import com.petcare.app.ui.components.LoadingBox
 import com.petcare.app.ui.components.PetAvatar
@@ -52,31 +46,22 @@ import com.petcare.app.ui.theme.PetCareTheme
 import com.petcare.app.util.DateUtils
 import com.petcare.app.viewmodel.AppViewModelProvider
 import com.petcare.app.viewmodel.HomeViewModel
-import com.petcare.app.viewmodel.PetSummary
 import java.time.LocalDate
 
 @Composable
 fun HomeScreen(
-    onOpenPet: (String) -> Unit,
     onOpenAppointment: (String) -> Unit,
     onAddPet: () -> Unit,
     onAddAppointment: () -> Unit,
     onSeeAllAppointments: () -> Unit,
-    onLogout: () -> Unit,
     viewModel: HomeViewModel = viewModel(factory = AppViewModelProvider.Factory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    var confirmLogout by rememberSaveable { mutableStateOf(false) }
 
     PetCareScaffold(
         title = if (state.userName.isBlank()) "สวัสดี" else "สวัสดี, ${state.userName}",
         subtitle = "วันนี้ ${DateUtils.toThaiDateWithDay(DateUtils.formatDate(LocalDate.now()))}",
         isTabScreen = true,
-        actions = {
-            IconButton(onClick = { confirmLogout = true }) {
-                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = "ออกจากระบบ")
-            }
-        },
         floatingActionButton = {
             if (state.pets.isNotEmpty()) {
                 ExtendedFloatingActionButton(
@@ -108,6 +93,9 @@ fun HomeScreen(
                     StatTile("เสร็จเดือนนี้", state.doneThisMonth, PetCareTheme.colors.done, PetCareTheme.colors.doneContainer, Modifier.weight(1f))
                 }
             }
+
+            // เคล็ดลับตามสายพันธุ์และฤดูกาล (แทนส่วน "สัตว์เลี้ยงของฉัน" เดิม)
+            item { CareTipCard(state.tips) }
 
             if (state.pets.isEmpty()) {
                 item {
@@ -177,37 +165,7 @@ fun HomeScreen(
                     TreatmentCaseCard(item, onClick = { onOpenAppointment(item.appointment.id) })
                 }
             }
-
-            item {
-                SectionHeader(
-                    "สัตว์เลี้ยงของฉัน",
-                    count = state.pets.size,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            }
-            items(state.pets, key = { "p_" + it.pet.id }) { summary ->
-                PetMiniCard(summary, onClick = { onOpenPet(summary.pet.id) })
-            }
-            item {
-                OutlinedCard(onClick = onAddPet, modifier = Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Outlined.Add, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                        Spacer(Modifier.width(12.dp))
-                        Text("เพิ่มสัตว์เลี้ยง", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
-            }
         }
-    }
-
-    if (confirmLogout) {
-        ConfirmDialog(
-            title = "ออกจากระบบ?",
-            message = "การแจ้งเตือนในเครื่องนี้จะหยุดจนกว่าจะเข้าสู่ระบบอีกครั้ง",
-            confirmLabel = "ออกจากระบบ",
-            onConfirm = onLogout,
-            onDismiss = { confirmLogout = false },
-        )
     }
 }
 
@@ -265,64 +223,6 @@ private fun StatTile(label: String, value: Int, color: Color, container: Color, 
         Column(Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) {
             Text(value.toString(), style = NumberStyle, color = color)
             Text(label, style = MaterialTheme.typography.labelMedium, color = color, maxLines = 1)
-        }
-    }
-}
-
-@Composable
-private fun PetMiniCard(summary: PetSummary, onClick: () -> Unit) {
-    val pet = summary.pet
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = CardDefaults.outlinedCardBorder(),
-    ) {
-        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
-            PetAvatar(pet.species, pet.avatarColor, photo = pet.photo, size = 52.dp)
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    pet.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                val kind = listOf(pet.species, pet.breed).filter { it.isNotBlank() }.joinToString(" · ")
-                if (kind.isNotBlank()) {
-                    Text(
-                        kind,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                val next = summary.nextAppointment
-                when {
-                    summary.overdueCount > 0 -> Text(
-                        "เลยกำหนด ${summary.overdueCount} นัด",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = PetCareTheme.colors.rust,
-                    )
-                    next != null -> Text(
-                        "นัดถัดไป ${DateUtils.toThaiDateWithDay(next.appointment.date)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                    else -> Text(
-                        "ไม่มีนัดค้าง",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Icon(
-                Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
