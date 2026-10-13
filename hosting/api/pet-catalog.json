@@ -55,7 +55,7 @@
       "breeds": [
         { "name": "ปลากัด", "nameEn": "Betta" },
         { "name": "ปลาทอง", "nameEn": "Goldfish" },
-        { "name": "ปลาคาร์ป (โค่ย)", "nameEn": "Koi" },
+        { "name": "ปลาคาร์ป / โค่ย", "nameEn": "Koi" },
         { "name": "ปลาหางนกยูง", "nameEn": "Guppy" },
         { "name": "ปลาหมอสี", "nameEn": "Flowerhorn" },
         { "name": "ปลาอะโรวาน่า", "nameEn": "Arowana" },
@@ -71,11 +71,11 @@
       "name": "สัตว์ฟันแทะ",
       "emoji": "🐹",
       "breeds": [
-        { "name": "แฮมสเตอร์ไจแอนท์ (ซีเรียน)", "nameEn": "Syrian Hamster", "species": "หนูแฮมสเตอร์" },
+        { "name": "แฮมสเตอร์ไจแอนท์", "nameEn": "Syrian Hamster", "species": "หนูแฮมสเตอร์" },
         { "name": "แฮมสเตอร์แคมป์เบลล์", "nameEn": "Campbell's Dwarf Hamster", "species": "หนูแฮมสเตอร์" },
         { "name": "แฮมสเตอร์วินเทอร์ไวท์", "nameEn": "Winter White Hamster", "species": "หนูแฮมสเตอร์" },
         { "name": "แฮมสเตอร์โรโบรอฟสกี้", "nameEn": "Roborovski Hamster", "species": "หนูแฮมสเตอร์" },
-        { "name": "หนูตะเภา (แกสบี้)", "nameEn": "Guinea Pig", "species": "หนูตะเภา" },
+        { "name": "หนูตะเภา / แกสบี้", "nameEn": "Guinea Pig", "species": "หนูตะเภา" },
         { "name": "ชินชิล่า", "nameEn": "Chinchilla", "species": "ชินชิล่า" },
         { "name": "เจอร์บิล", "nameEn": "Gerbil", "species": "หนูเจอร์บิล" },
         { "name": "หนูแรท", "nameEn": "Fancy Rat", "species": "หนูแรท" },

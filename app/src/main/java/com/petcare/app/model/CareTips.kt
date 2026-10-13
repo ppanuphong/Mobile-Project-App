@@ -110,8 +110,10 @@ object CareTipEngine {
             s.contains("กระต่าย") -> Kind.RABBIT
             s.contains("นก") -> Kind.BIRD
             s.contains("ปลา") -> Kind.FISH
-            s.contains("หนู") || s.contains("แฮมสเตอร์") || s.contains("ชินชิล่า") || s.contains("เดกู") -> Kind.RODENT
-            s.contains("เต่า") || s.contains("งู") || s.contains("กิ้งก่า") || s.contains("ตุ๊กแก") || s.contains("อีกัวน่า") -> Kind.REPTILE
+            s.contains("สัตว์ฟันแทะ") || s.contains("หนู") || s.contains("แฮมสเตอร์") ||
+                s.contains("ชินชิล่า") || s.contains("เดกู") -> Kind.RODENT
+            s.contains("สัตว์เลื้อยคลาน") || s.contains("เต่า") || s.contains("งู") || s.contains("กิ้งก่า") ||
+                s.contains("ตุ๊กแก") || s.contains("อีกัวน่า") -> Kind.REPTILE
             else -> Kind.OTHER
         }
     }

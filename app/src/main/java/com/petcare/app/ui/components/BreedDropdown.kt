@@ -49,8 +49,9 @@ fun BreedDropdown(
         loading -> null
         fromApi && group == BreedGroup.DOG -> "ข้อมูลพันธุ์จาก dog.ceo"
         fromApi && group == BreedGroup.CAT -> "ข้อมูลพันธุ์จาก catfact.ninja"
-        group == BreedGroup.DOG || group == BreedGroup.CAT -> "ออฟไลน์ – แสดงรายการพื้นฐาน"
-        group == null && species.isNotBlank() -> "ไม่มีรายการสำหรับชนิดนี้ พิมพ์สายพันธุ์เองได้"
+        fromApi && group != null -> "ข้อมูลพันธุ์จาก PetCare Catalog API"
+        group != null -> "ออฟไลน์ – แสดงรายการพื้นฐาน"
+        species.isNotBlank() -> "ไม่มีรายการสำหรับชนิดนี้ พิมพ์สายพันธุ์เองได้"
         else -> null
     }
     val showMenu = expanded && filtered.isNotEmpty()

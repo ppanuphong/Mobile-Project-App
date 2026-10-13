@@ -5,13 +5,13 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.petcare.app.data.AuthRepository
-import com.petcare.app.data.PetCatalogRepository
+import com.petcare.app.data.BreedRepository
 import com.petcare.app.data.PetPhotoProcessor
 import com.petcare.app.data.PetRepository
 import com.petcare.app.model.AVATAR_COLORS
-import com.petcare.app.model.CatalogBreed
+import com.petcare.app.model.Breed
+import com.petcare.app.model.BreedGroup
 import com.petcare.app.model.Pet
-import com.petcare.app.model.PetCategory
 import com.petcare.app.model.User
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,29 +20,25 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** ส่วน "เลือกสัตว์เลี้ยง" ในหน้าสมัครสมาชิก (ไม่บังคับ) */
+/**
+ * ส่วน "สัตว์เลี้ยงของคุณ" ในหน้าสมัครสมาชิก (ไม่บังคับ) ใช้ช่องแบบเดียวกับหน้าเพิ่มสัตว์เลี้ยง
+ * species ว่าง = ไม่เพิ่มสัตว์เลี้ยงตอนสมัคร
+ */
 data class PetPickerState(
-    val categoriesLoading: Boolean = true,
-    val categoriesError: String? = null,
-    val categories: List<PetCategory> = emptyList(),
-    val selectedCategory: PetCategory? = null,
+    val species: String = "",
+    val breed: String = "",
+    val breedOptions: List<Breed> = emptyList(),
     val breedsLoading: Boolean = false,
-    val breedsError: String? = null,
-    val breeds: List<CatalogBreed> = emptyList(),
-    val breedQuery: String = "",
-    val selectedBreed: CatalogBreed? = null,
-    val breedImageUrl: String? = null,
+    /** false = ใช้รายการพื้นฐานในเครื่อง (ออฟไลน์) */
+    val breedsFromApi: Boolean = false,
     val petName: String = "",
     val birthday: String = "",
     val avatarColor: Long = AVATAR_COLORS.first(),
     val photo: String = "",
     val isProcessingPhoto: Boolean = false,
 ) {
-    /** สายพันธุ์ที่ตรงกับคำค้น (ค้นทั้งชื่อและคำอธิบาย) */
-    val visibleBreeds: List<CatalogBreed>
-        get() = if (breedQuery.isBlank()) breeds else breeds.filter {
-            it.name.contains(breedQuery, ignoreCase = true) || it.subtitle.contains(breedQuery, ignoreCase = true)
-        }
+    val isAddingPet: Boolean
+        get() = species.isNotBlank()
 }
 
 data class RegisterUiState(
@@ -61,7 +57,7 @@ data class RegisterUiState(
 class RegisterViewModel(
     private val authRepository: AuthRepository,
     private val petRepository: PetRepository,
-    private val petCatalogRepository: PetCatalogRepository,
+    private val breedRepository: BreedRepository,
     private val photoProcessor: PetPhotoProcessor,
 ) : ViewModel() {
 
@@ -69,11 +65,6 @@ class RegisterViewModel(
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     private var breedsJob: Job? = null
-    private var imageJob: Job? = null
-
-    init {
-        loadCategories()
-    }
 
     fun onNameChange(v: String) = edit(FIELD_NAME) { copy(name = v) }
     fun onPhoneChange(v: String) = edit(FIELD_PHONE) { copy(phone = v.filter { it.isDigit() || it == '-' }) }
@@ -88,67 +79,33 @@ class RegisterViewModel(
     private fun updatePet(change: PetPickerState.() -> PetPickerState) =
         _uiState.update { it.copy(pet = it.pet.change()) }
 
-    // ---------- เลือกสัตว์เลี้ยง ----------
+    // ---------- เลือกสัตว์เลี้ยง (เหมือนหน้าเพิ่มสัตว์เลี้ยง) ----------
 
-    fun loadCategories() {
-        updatePet { copy(categoriesLoading = true, categoriesError = null) }
-        viewModelScope.launch {
-            runCatching { petCatalogRepository.getCategories() }
-                .onSuccess { list -> updatePet { copy(categoriesLoading = false, categories = list) } }
-                .onFailure { e ->
-                    Log.w(TAG, "load categories failed", e)
-                    updatePet { copy(categoriesLoading = false, categoriesError = API_ERROR) }
-                }
-        }
-    }
-
-    /** เลือกหมวดหมู่ (กดซ้ำ = ยกเลิก) แล้วโหลดสายพันธุ์ของหมวดนั้น */
-    fun selectCategory(category: PetCategory) {
-        if (_uiState.value.pet.selectedCategory?.id == category.id) {
-            clearPet()
-            return
-        }
-        imageJob?.cancel()
+    /** เลือกชนิดสัตว์ แล้วโหลดรายชื่อพันธุ์ของชนิดนั้น (ล้างพันธุ์เดิมถ้ากลุ่มเปลี่ยน) */
+    fun onSpeciesChange(v: String) {
+        val current = _uiState.value.pet
+        val groupChanged = BreedGroup.fromSpecies(v) != BreedGroup.fromSpecies(current.species)
         updatePet {
             copy(
-                selectedCategory = category,
-                avatarColor = if (selectedCategory == null) AVATAR_COLORS.random() else avatarColor,
-                breeds = emptyList(),
-                breedQuery = "",
-                selectedBreed = null,
-                breedImageUrl = null,
+                species = v,
+                breed = if (groupChanged) "" else breed,
+                // สุ่มสีประจำตัวให้ตอนเริ่มเพิ่มสัตว์เลี้ยง
+                avatarColor = if (!isAddingPet) AVATAR_COLORS.random() else avatarColor,
             )
         }
-        loadBreeds()
+        if (groupChanged) loadBreeds(v)
     }
 
-    fun loadBreeds() {
-        val category = _uiState.value.pet.selectedCategory ?: return
+    private fun loadBreeds(species: String) {
         breedsJob?.cancel()
-        updatePet { copy(breedsLoading = true, breedsError = null) }
+        updatePet { copy(breedsLoading = true) }
         breedsJob = viewModelScope.launch {
-            runCatching { petCatalogRepository.getBreeds(category) }
-                .onSuccess { list -> updatePet { copy(breedsLoading = false, breeds = list) } }
-                .onFailure { e ->
-                    Log.w(TAG, "load breeds failed", e)
-                    updatePet { copy(breedsLoading = false, breedsError = API_ERROR) }
-                }
+            val result = breedRepository.breedsFor(species)
+            updatePet { copy(breedOptions = result.breeds, breedsFromApi = result.fromApi, breedsLoading = false) }
         }
     }
 
-    fun onBreedQueryChange(v: String) = updatePet { copy(breedQuery = v) }
-
-    fun selectBreed(breed: CatalogBreed) {
-        updatePet { copy(selectedBreed = breed, breedImageUrl = null, breedQuery = "") }
-        imageJob?.cancel()
-        if (breed.dogCeoPath != null) {
-            imageJob = viewModelScope.launch {
-                // รูปเป็นแค่ส่วนเสริม โหลดไม่ได้ก็ไม่ต้องแจ้ง
-                val url = runCatching { petCatalogRepository.getBreedImage(breed) }.getOrNull()
-                updatePet { if (selectedBreed?.id == breed.id) copy(breedImageUrl = url) else this }
-            }
-        }
-    }
+    fun onBreedChange(v: String) = updatePet { copy(breed = v) }
 
     fun onPetNameChange(v: String) = _uiState.update {
         it.copy(pet = it.pet.copy(petName = v), errors = it.errors - FIELD_PET_NAME)
@@ -178,23 +135,8 @@ class RegisterViewModel(
     /** ไม่เพิ่มสัตว์เลี้ยงตอนสมัคร */
     fun clearPet() {
         breedsJob?.cancel()
-        imageJob?.cancel()
         _uiState.update {
-            it.copy(
-                pet = it.pet.copy(
-                    selectedCategory = null,
-                    breeds = emptyList(),
-                    breedsLoading = false,
-                    breedsError = null,
-                    breedQuery = "",
-                    selectedBreed = null,
-                    breedImageUrl = null,
-                    petName = "",
-                    birthday = "",
-                    photo = "",
-                ),
-                errors = it.errors - FIELD_PET_NAME - FIELD_PET_BIRTHDAY,
-            )
+            it.copy(pet = PetPickerState(), errors = it.errors - FIELD_PET_NAME - FIELD_PET_BIRTHDAY)
         }
     }
 
@@ -208,10 +150,10 @@ class RegisterViewModel(
             validateEmail(s.email.trim())?.let { put(FIELD_EMAIL, it) }
             if (s.password.length < 6) put(FIELD_PASSWORD, "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร")
             if (s.confirmPassword != s.password) put(FIELD_CONFIRM, "รหัสผ่านไม่ตรงกัน")
-            if (s.pet.selectedCategory != null && s.pet.petName.isBlank()) {
+            if (s.pet.isAddingPet && s.pet.petName.isBlank()) {
                 put(FIELD_PET_NAME, "กรุณาตั้งชื่อสัตว์เลี้ยง หรือกด \"ไม่เพิ่มตอนนี้\"")
             }
-            if (s.pet.selectedCategory != null) {
+            if (s.pet.isAddingPet) {
                 validatePetBirthday(s.pet.birthday)?.let { put(FIELD_PET_BIRTHDAY, it) }
             }
         }
@@ -235,12 +177,11 @@ class RegisterViewModel(
     }
 
     private fun firstPetOf(picker: PetPickerState): Pet? {
-        val category = picker.selectedCategory ?: return null
-        val breed = picker.selectedBreed?.takeIf { it != CatalogBreed.UNKNOWN }
+        if (!picker.isAddingPet) return null
         return Pet(
             name = picker.petName.trim(),
-            species = breed?.species ?: category.name,
-            breed = breed?.name.orEmpty(),
+            species = picker.species,
+            breed = picker.breed.trim(),
             birthday = picker.birthday,
             avatarColor = picker.avatarColor,
             photo = picker.photo,
@@ -249,7 +190,6 @@ class RegisterViewModel(
 
     companion object {
         private const val TAG = "RegisterViewModel"
-        private const val API_ERROR = "โหลดข้อมูลจาก API ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่"
 
         const val FIELD_NAME = "name"
         const val FIELD_PHONE = "phone"

@@ -41,7 +41,7 @@ class AppContainer(context: Context) {
     val reminderScheduler = ReminderScheduler(context)
 
     val userRepository by lazy { UserRepository(firestore) }
-    val breedRepository by lazy { BreedRepository() }
+    val breedRepository by lazy { BreedRepository(petCatalogRepository) }
     val petRepository by lazy { PetRepository(firestore, auth, reminderScheduler) }
     val appointmentRepository by lazy { AppointmentRepository(firestore, auth, reminderScheduler) }
     val petCatalogRepository by lazy { PetCatalogRepository(PetApiClient()) }

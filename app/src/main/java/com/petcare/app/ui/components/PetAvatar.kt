@@ -20,6 +20,9 @@ import coil3.compose.AsyncImage
 
 /** อีโมจิตามชนิดสัตว์ ถ้าไม่รู้จักใช้อุ้งเท้า */
 fun speciesEmoji(species: String): String = when {
+    species.contains("สัตว์ฟันแทะ") -> "🐹"
+    species.contains("สัตว์เลื้อยคลาน") -> "🦎"
+    species.contains("สัตว์เลี้ยงพิเศษ") -> "🦔"
     species.contains("สุนัข") || species.contains("หมา") -> "🐶"
     species.contains("แมว") -> "🐱"
     species.contains("กระต่าย") -> "🐰"

@@ -4,6 +4,7 @@ import com.petcare.app.model.Breed
 import com.petcare.app.model.BreedGroup
 import com.petcare.app.model.buildBreeds
 import com.petcare.app.model.dogCeoNames
+import com.petcare.app.model.toBreed
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
@@ -20,9 +21,10 @@ data class BreedResult(val breeds: List<Breed>, val fromApi: Boolean)
  * ดึงรายชื่อสายพันธุ์จาก API ฟรีที่ไม่ต้องใช้คีย์
  * - สุนัข: dog.ceo
  * - แมว: catfact.ninja
- * ชนิดอื่นใช้รายการในเครื่อง และ cache ผลไว้ในหน่วยความจำตลอดอายุแอป
+ * - ชนิดอื่น: PetCare Catalog API (Firebase Hosting)
+ * ถ้าโหลดไม่ได้ใช้รายการในเครื่อง [BreedGroup.popular] และ cache ผลไว้ในหน่วยความจำตลอดอายุแอป
  */
-class BreedRepository {
+class BreedRepository(private val catalog: PetCatalogRepository) {
 
     private val cache = mutableMapOf<BreedGroup, BreedResult>()
     private val mutex = Mutex()
@@ -35,7 +37,7 @@ class BreedRepository {
             when (group) {
                 BreedGroup.DOG -> BreedResult(buildBreeds(fetchDogNames(), group.popular), fromApi = true)
                 BreedGroup.CAT -> BreedResult(buildBreeds(fetchCatNames(), group.popular), fromApi = true)
-                else -> null
+                else -> catalogBreeds(group)?.let { BreedResult(it, fromApi = true) }
             }
         } catch (e: CancellationException) {
             throw e // ผู้ใช้เปลี่ยนชนิดสัตว์ระหว่างโหลด อย่าคืนรายการสำรองทับผลใหม่
@@ -46,6 +48,13 @@ class BreedRepository {
         if (result != null) mutex.withLock { cache[group] = result }
         // ไม่ cache ตอนล้มเหลว เพื่อให้ลองใหม่ได้เมื่อกลับมาออนไลน์
         return result ?: BreedResult(buildBreeds(emptyList(), group.popular), fromApi = false)
+    }
+
+    /** รายชื่อจาก Catalog API (ชื่อไทยครบทุกพันธุ์) + พันธุ์ยอดนิยมที่แคตตาล็อกยังไม่มี */
+    private suspend fun catalogBreeds(group: BreedGroup): List<Breed>? {
+        val breeds = catalog.category(group.catalogId)?.breeds?.map { it.toBreed() }
+        if (breeds.isNullOrEmpty()) return null
+        return (breeds + group.popular).distinctBy { it.en.lowercase() }
     }
 
     private suspend fun fetchDogNames(): List<String> {

@@ -17,25 +17,36 @@ data class Breed(val en: String, val th: String? = null) {
     }
 }
 
-/** แหล่งรายชื่อพันธุ์ตามชนิดสัตว์ ใช้คำเดียวกับ [SPECIES_OPTIONS] และ speciesEmoji */
-enum class BreedGroup(val popular: List<Breed>) {
-    DOG(POPULAR_DOGS),
-    CAT(POPULAR_CATS),
-    RABBIT(RABBITS),
-    BIRD(BIRDS),
-    FISH(FISHES),
-    HAMSTER(HAMSTERS),
-    TURTLE(TURTLES);
+/**
+ * แหล่งรายชื่อพันธุ์ตามชนิดสัตว์ ใช้คำเดียวกับ [SPECIES_OPTIONS] และ speciesEmoji
+ * - สุนัข/แมว: API ภายนอก (dog.ceo, catfact.ninja)
+ * - ชนิดอื่น: PetCare Catalog API หมวด [catalogId] (hosting/api/pet-catalog.json)
+ * - [popular]: รายการสำรองในเครื่อง (ออฟไลน์) และชื่อไทยของพันธุ์ยอดนิยม
+ */
+enum class BreedGroup(val catalogId: String, val popular: List<Breed>) {
+    DOG("dog", POPULAR_DOGS),
+    CAT("cat", POPULAR_CATS),
+    RABBIT("rabbit", RABBITS),
+    BIRD("bird", BIRDS),
+    FISH("fish", FISHES),
+    RODENT("rodent", RODENTS),
+    REPTILE("reptile", REPTILES),
+    EXOTIC("exotic", EXOTICS);
 
     companion object {
         fun fromSpecies(species: String): BreedGroup? = when {
+            // ชื่อหมวดใน SPECIES_OPTIONS ก่อน แล้วค่อยเป็นชื่อชนิดเฉพาะ (ข้อมูลเก่า/พิมพ์เอง)
+            species.contains("สัตว์ฟันแทะ") -> RODENT
+            species.contains("สัตว์เลื้อยคลาน") -> REPTILE
+            species.contains("สัตว์เลี้ยงพิเศษ") -> EXOTIC
             species.contains("สุนัข") || species.contains("หมา") -> DOG
             species.contains("แมว") -> CAT
             species.contains("กระต่าย") -> RABBIT
             species.contains("นก") -> BIRD
             species.contains("ปลา") -> FISH
-            species.contains("หนู") || species.contains("แฮมสเตอร์") -> HAMSTER
-            species.contains("เต่า") -> TURTLE
+            listOf("หนู", "แฮมสเตอร์", "ชินชิล่า", "เดกู").any { species.contains(it) } -> RODENT
+            listOf("เต่า", "งู", "กิ้งก่า", "ตุ๊กแก", "อีกัวน่า", "อิกัวน่า").any { species.contains(it) } -> REPTILE
+            listOf("เม่น", "ชูก้าไกลเดอร์", "เฟอร์เร็ต").any { species.contains(it) } -> EXOTIC
             else -> null
         }
     }
@@ -190,15 +201,26 @@ private val FISHES = listOf(
     Breed("Arowana", "ปลาอะโรวาน่า"),
 )
 
-private val HAMSTERS = listOf(
-    Breed("Syrian", "ซีเรียน"),
-    Breed("Winter White", "วินเทอร์ไวท์"),
-    Breed("Roborovski", "โรโบรอฟสกี้"),
-    Breed("Campbell", "แคมป์เบล"),
+private val RODENTS = listOf(
+    Breed("Syrian Hamster", "แฮมสเตอร์ไจแอนท์"),
+    Breed("Winter White Hamster", "แฮมสเตอร์วินเทอร์ไวท์"),
+    Breed("Roborovski Hamster", "แฮมสเตอร์โรโบรอฟสกี้"),
+    Breed("Campbell's Dwarf Hamster", "แฮมสเตอร์แคมป์เบลล์"),
+    Breed("Guinea Pig", "หนูตะเภา"),
+    Breed("Chinchilla", "ชินชิล่า"),
 )
 
-private val TURTLES = listOf(
-    Breed("Red-eared Slider", "เต่าญี่ปุ่น"),
+private val REPTILES = listOf(
+    Breed("Red-eared Slider", "เต่าแก้มแดง"),
     Breed("Sulcata Tortoise", "เต่าซูคาต้า"),
     Breed("Leopard Tortoise", "เต่าเสือดาว"),
+    Breed("Bearded Dragon", "เบียร์ดดราก้อน"),
+    Breed("Leopard Gecko", "ตุ๊กแกเลพเพิร์ด"),
+    Breed("Ball Python", "งูบอลไพธอน"),
+)
+
+private val EXOTICS = listOf(
+    Breed("African Pygmy Hedgehog", "เม่นแคระ"),
+    Breed("Sugar Glider", "ชูก้าไกลเดอร์"),
+    Breed("Ferret", "เฟอร์เร็ต"),
 )

@@ -24,7 +24,7 @@ object AppViewModelProvider {
             RegisterViewModel(
                 container().authRepository,
                 container().petRepository,
-                container().petCatalogRepository,
+                container().breedRepository,
                 container().petPhotoProcessor,
             )
         }

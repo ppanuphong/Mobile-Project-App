@@ -39,18 +39,21 @@ app/src/main/java/com/petcare/app/
 การไหลของข้อมูล: `Screen (Compose)` → `ViewModel (StateFlow)` → `Repository` → `Firestore / Auth`
 Repository ส่งข้อมูลกลับเป็น `Flow` ที่มาจาก `addSnapshotListener` จึงอัปเดตหน้าจอทันทีเมื่อข้อมูลเปลี่ยน
 
-## API ข้อมูลสัตว์เลี้ยง (หน้าสมัครสมาชิก)
+## ชนิดสัตว์และสายพันธุ์ (หน้าสมัคร / เพิ่มสัตว์เลี้ยง / นัดหมาย)
 
-ตอนสมัคร ผู้ใช้เลือกหมวดหมู่สัตว์ → สายพันธุ์ → ตั้งชื่อ แล้วแอปบันทึกเป็นสัตว์เลี้ยงตัวแรกให้ (ข้ามได้)
+ทุกฟอร์มใช้ช่องชุดเดียวกัน: **ชนิดสัตว์** (dropdown 8 ชนิด: สุนัข แมว กระต่าย นก ปลา สัตว์ฟันแทะ สัตว์เลื้อยคลาน สัตว์เลี้ยงพิเศษ)
+→ **สายพันธุ์** (dropdown พิมพ์ค้นหาได้ทั้งไทย/อังกฤษ หรือพิมพ์เองถ้าไม่มีในรายการ)
+ตอนสมัครเลือกชนิดสัตว์ = เพิ่มสัตว์เลี้ยงตัวแรกไปพร้อมกัน (ไม่เลือก = ข้าม)
 
-| ข้อมูล | API | หมายเหตุ |
+| ชนิด | แหล่งรายชื่อสายพันธุ์ | หมายเหตุ |
 |---|---|---|
-| หมวดหมู่ทั้งหมด + สายพันธุ์ กระต่าย นก ปลา สัตว์ฟันแทะ สัตว์เลื้อยคลาน สัตว์เลี้ยงพิเศษ | PetCare Catalog API `https://petcare-5x7gf-a3068.web.app/api/pet-catalog.json` | ไฟล์ [hosting/api/pet-catalog.json](hosting/api/pet-catalog.json) บน Firebase Hosting |
-| สายพันธุ์สุนัข (165) + รูปตัวอย่าง | [Dog CEO API](https://dog.ceo/dog-api/) | ฟรี ไม่ต้องใช้ key |
-| สายพันธุ์แมว (98) | [catfact.ninja](https://catfact.ninja) | ฟรี ไม่ต้องใช้ key |
+| สุนัข | [Dog CEO API](https://dog.ceo/dog-api/) + ชื่อไทยของพันธุ์ยอดนิยม | ฟรี ไม่ต้องใช้ key |
+| แมว | [catfact.ninja](https://catfact.ninja) + ชื่อไทยของพันธุ์ยอดนิยม | ฟรี ไม่ต้องใช้ key |
+| ชนิดอื่น ๆ | PetCare Catalog API `https://petcare-5x7gf-a3068.web.app/api/pet-catalog.json` | ไฟล์ [hosting/api/pet-catalog.json](hosting/api/pet-catalog.json) บน Firebase Hosting |
 
-โค้ดอยู่ที่ [PetApi.kt](app/src/main/java/com/petcare/app/data/remote/PetApi.kt) (เรียก API + แปลง JSON) และ
-[PetCatalogRepository.kt](app/src/main/java/com/petcare/app/data/PetCatalogRepository.kt)
+ถ้าออฟไลน์หรือ API ล่ม จะใช้รายการพื้นฐานในเครื่องแทน ([Breed.kt](app/src/main/java/com/petcare/app/model/Breed.kt))
+โค้ดหลักอยู่ที่ [BreedRepository.kt](app/src/main/java/com/petcare/app/data/BreedRepository.kt)
+และ [PetCatalogRepository.kt](app/src/main/java/com/petcare/app/data/PetCatalogRepository.kt)
 
 แก้รายการหมวดหมู่หรือสายพันธุ์: แก้ `hosting/api/pet-catalog.json` แล้วสั่ง
 

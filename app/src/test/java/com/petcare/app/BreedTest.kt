@@ -2,11 +2,13 @@ package com.petcare.app
 
 import com.petcare.app.model.Breed
 import com.petcare.app.model.BreedGroup
+import com.petcare.app.model.SPECIES_OPTIONS
 import com.petcare.app.model.buildBreeds
 import com.petcare.app.model.cleanBreedName
 import com.petcare.app.model.dogCeoNames
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -80,7 +82,17 @@ class BreedTest {
     fun speciesToGroup() {
         assertEquals(BreedGroup.DOG, BreedGroup.fromSpecies("สุนัข"))
         assertEquals(BreedGroup.CAT, BreedGroup.fromSpecies("แมว"))
-        assertEquals(BreedGroup.HAMSTER, BreedGroup.fromSpecies("หนูแฮมสเตอร์"))
-        assertNull(BreedGroup.fromSpecies("อิกัวน่า"))
+        assertEquals(BreedGroup.RODENT, BreedGroup.fromSpecies("หนูแฮมสเตอร์"))
+        // ชนิดสัตว์ใน SPECIES_OPTIONS ครบทุกหมวดของหน้าสมัคร
+        assertEquals(BreedGroup.RODENT, BreedGroup.fromSpecies("สัตว์ฟันแทะ"))
+        assertEquals(BreedGroup.REPTILE, BreedGroup.fromSpecies("สัตว์เลื้อยคลาน"))
+        assertEquals(BreedGroup.REPTILE, BreedGroup.fromSpecies("อิกัวน่า"))
+        assertEquals(BreedGroup.EXOTIC, BreedGroup.fromSpecies("สัตว์เลี้ยงพิเศษ"))
+        assertNull(BreedGroup.fromSpecies("แมงมุม"))
+    }
+
+    @Test
+    fun everySpeciesOptionHasBreedGroup() {
+        SPECIES_OPTIONS.forEach { assertNotNull("ไม่มีกลุ่มพันธุ์สำหรับ $it", BreedGroup.fromSpecies(it)) }
     }
 }
