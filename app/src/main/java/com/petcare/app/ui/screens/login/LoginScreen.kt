@@ -26,8 +26,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockReset
+import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -72,6 +75,15 @@ fun LoginScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     var showPassword by rememberSaveable { mutableStateOf(false) }
+    var showReset by rememberSaveable { mutableStateOf(false) }
+
+    // ส่งลิงก์สำเร็จแล้วปิดหน้าต่าง (ข้อความยืนยันแสดงในการ์ดเข้าสู่ระบบ)
+    LaunchedEffect(state.resetSent) {
+        if (state.resetSent) {
+            showReset = false
+            viewModel.onResetDialogClosed()
+        }
+    }
 
     LaunchedEffect(state.loggedInUser) {
         if (state.loggedInUser != null) onLoggedIn()
@@ -158,6 +170,27 @@ fun LoginScreen(
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus(); viewModel.login() }),
                     modifier = Modifier.fillMaxWidth(),
                 )
+                TextButton(
+                    onClick = { focusManager.clearFocus(); showReset = true },
+                    enabled = !state.isLoading,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .offset(y = (-8).dp),
+                ) { Text("ลืมรหัสผ่าน?") }
+
+                if (state.infoMessage != null) {
+                    Surface(
+                        color = PetCareTheme.colors.doneContainer,
+                        contentColor = PetCareTheme.colors.onDoneContainer,
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Outlined.MarkEmailRead, contentDescription = null)
+                            Spacer(Modifier.size(8.dp))
+                            Text(state.infoMessage.orEmpty(), style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
 
                 if (state.errorMessage != null) {
                     Surface(
@@ -224,4 +257,72 @@ fun LoginScreen(
             TextButton(onClick = onRegister, enabled = !state.isLoading) { Text("สมัครสมาชิก") }
         }
     }
+
+    if (showReset) {
+        ForgotPasswordDialog(
+            initialEmail = state.email,
+            sending = state.resetSending,
+            error = state.resetError,
+            onEmailEdited = viewModel::clearResetError,
+            onSend = viewModel::sendPasswordReset,
+            onDismiss = {
+                showReset = false
+                viewModel.onResetDialogClosed()
+            },
+        )
+    }
+}
+
+/** หน้าต่างลืมรหัสผ่าน: กรอกอีเมลแล้วส่งลิงก์ตั้งรหัสผ่านใหม่ */
+@Composable
+private fun ForgotPasswordDialog(
+    initialEmail: String,
+    sending: Boolean,
+    error: String?,
+    onEmailEdited: () -> Unit,
+    onSend: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var email by rememberSaveable { mutableStateOf(initialEmail) }
+    AlertDialog(
+        onDismissRequest = { if (!sending) onDismiss() },
+        icon = { Icon(Icons.Outlined.LockReset, contentDescription = null) },
+        title = { Text("ลืมรหัสผ่าน") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    "กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้ทางอีเมล",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = {
+                        email = it
+                        onEmailEdited()
+                    },
+                    label = { Text("อีเมล") },
+                    leadingIcon = { Icon(Icons.Outlined.Email, contentDescription = null) },
+                    isError = error != null,
+                    supportingText = error?.let { { Text(it) } },
+                    singleLine = true,
+                    enabled = !sending,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Send),
+                    keyboardActions = KeyboardActions(onSend = { onSend(email) }),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSend(email) }, enabled = !sending) {
+                if (sending) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.size(8.dp))
+                }
+                Text("ส่งลิงก์")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !sending) { Text("ยกเลิก") }
+        },
+    )
 }
