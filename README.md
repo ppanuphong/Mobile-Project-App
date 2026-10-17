@@ -22,15 +22,17 @@
 
 ```
 app/src/main/java/com/petcare/app/
-├── model/          data class: User, Pet, VetAppointment + enum สถานะ/ประเภท
-├── data/           Repository (Auth, User, Pet, Appointment), SessionManager (DataStore), DemoDataSeeder
-│   └── remote/     ชื่อ collection + ตัวแปลง Firestore snapshot listener เป็น Flow (realtime)
+├── model/          data class: User, Pet, VetAppointment (+ TreatmentResult, ProgressUpdate),
+│                   Breed/BreedGroup (สายพันธุ์), PetCatalog, CareTips (เคล็ดลับ), enum สถานะ/ประเภท
+├── data/           Repository: Auth, User, Pet, Appointment, Breed, PetCatalog
+│                   + SessionManager (DataStore), PetPhotoProcessor (ย่อรูป), DemoDataSeeder
+│   └── remote/     Firestore snapshot listener → Flow (realtime), PetApi (Catalog API)
 ├── viewmodel/      ViewModel แยกต่อหน้าจอ ใช้ StateFlow เก็บ UI state
 ├── ui/
 │   ├── theme/      สี (light/dark), ฟอนต์, Typography
-│   ├── navigation/ เส้นทาง + NavHost + Bottom Navigation 4 แท็บ
-│   ├── components/ การ์ดนัด, avatar, date/time picker, dialog ฯลฯ
-│   └── screens/    login, home, pets, appointments, notifications
+│   ├── navigation/ เส้นทาง + NavHost + Bottom Navigation 4 แท็บ (หน้าหลัก / สัตว์เลี้ยง / นัดหมาย / โปรไฟล์)
+│   ├── components/ การ์ดนัด, การ์ดเคล็ดลับ, avatar/รูปโปรไฟล์, dropdown ชนิด/สายพันธุ์, เลือกรูป, date/time picker ฯลฯ
+│   └── screens/    login (+ สมัคร), home, pets, appointments (+ รายละเอียด/ผลการรักษา), profile (+ แก้ไข), notifications
 ├── notification/   ReminderScheduler (WorkManager), ReminderWorker, NotificationHelper
 ├── di/             AppContainer (สร้าง dependency ทั้งหมดแบบ manual)
 └── util/           DateUtils (วันที่แบบไทย พ.ศ., อายุ, นับวัน)
@@ -65,14 +67,14 @@ npx firebase-tools deploy --only hosting
 
 | Collection | เอกสาร | หมายเหตุ |
 |---|---|---|
-| `users/{uid}` | `User` | uid ตรงกับ Firebase Auth |
+| `users/{uid}` | `User` | uid ตรงกับ Firebase Auth; มีรูปโปรไฟล์ รูปหน้าปก แนะนำตัว ที่อยู่ |
 | `pets/{petId}` | `Pet` | `ownerId` = uid เจ้าของ |
 | `appointments/{id}` | `VetAppointment` | มี `ownerId` เพิ่มเพื่อ query และ security rules |
 
 - `date` = `"yyyy-MM-dd"`, `time` = `"HH:mm"`, `status` = `"PENDING"` / `"DONE"`
 - `VetAppointment.result` = ผลการรักษา (ผลวินิจฉัย การรักษา ยา น้ำหนัก ค่าใช้จ่าย ผลลัพธ์), `progress` = รายการบันทึกอาการ,
   `followUpOf` = id นัดเดิมถ้าเป็นนัดติดตามผล — ฝังอยู่ในเอกสารนัดเดียวกัน จึงใช้ security rules ชุดเดิมได้
-- `Pet.photo` = รูปโปรไฟล์ JPEG 480×480 (~30–60 KB) เข้ารหัส Base64 เก็บในเอกสารเลย
+- `Pet.photo`, `User.photo` = รูป JPEG 480×480 และ `User.coverPhoto` = รูปหน้าปก 960×360 (~30–90 KB) เข้ารหัส Base64 เก็บในเอกสารเลย
   เพราะ Firebase Storage ของโปรเจกต์ใหม่ต้องใช้แพ็กเกจ Blaze; แอปย่อรูปให้ก่อนบันทึก ([PetPhotoProcessor.kt](app/src/main/java/com/petcare/app/data/PetPhotoProcessor.kt))
 - สถานะ "เลยกำหนด" คำนวณจากวันที่ตอนแสดงผล ไม่ได้เก็บลงฐานข้อมูล
 - กฎความปลอดภัยอยู่ที่ [firestore.rules](firestore.rules): ผู้ใช้อ่าน/เขียนได้เฉพาะข้อมูลของตัวเอง
@@ -118,12 +120,15 @@ adb reverse tcp:8080 tcp:8080
 ### บัญชีเดโม
 
 กด **"ทดลองใช้ด้วยบัญชีเดโม"** ที่หน้าเข้าสู่ระบบ (`demo@petcare.app` / `demo1234`)
-ครั้งแรกแอปจะสร้างบัญชีนี้ พร้อมสัตว์เลี้ยง 2 ตัวและนัดหมายตัวอย่างที่อิงจากวันที่ปัจจุบัน
+ครั้งแรกแอปจะสร้างบัญชีนี้ พร้อมสัตว์เลี้ยง 2 ตัว นัดหมายตัวอย่างที่อิงจากวันที่ปัจจุบัน
+และเคสที่กำลังรักษา (มีผลการรักษา นัดติดตามผล และบันทึกอาการ)
+ทุกคนที่กดปุ่มนี้ใช้บัญชีเดียวกัน ข้อมูลที่ใครแก้จะเห็นร่วมกัน
 
 ## ทดสอบ
 
 ```bash
-./gradlew testDebugUnitTest   # unit test: วันที่แบบไทย, สถานะนัด, เวลาแจ้งเตือน
+./gradlew testDebugUnitTest   # unit test (36 ตัว): วันที่แบบไทย, สถานะนัดและเวลาแจ้งเตือน, สายพันธุ์/Catalog API,
+                              # ผลการรักษาและติดตามอาการ, เคล็ดลับตามสายพันธุ์/ฤดูกาล, การย่อ/ครอปรูป
 ./gradlew lintDebug
 ```
 
