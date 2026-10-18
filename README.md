@@ -6,6 +6,10 @@
 ## วิดีโอเดโม
 
 
+https://github.com/user-attachments/assets/37231c46-75a9-426a-b8cb-00171d1676cb
+
+
+
 ## ฟีเจอร์
 
 | หน้าจอ | รายละเอียด |
