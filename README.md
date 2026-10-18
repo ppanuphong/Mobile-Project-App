@@ -3,6 +3,10 @@
 แอป Android (Kotlin + Jetpack Compose) สำหรับบันทึกสัตว์เลี้ยง นัดหมอ และวัคซีน พร้อมแจ้งเตือนล่วงหน้า
 สถาปัตยกรรม **MVVM + Repository** ฐานข้อมูล **Firebase (Cloud Firestore + Authentication)**
 
+## วิดีโอเดโม
+
+▶️ [ดูวิดีโอการใช้งานแอป (docs/demo.webm)](docs/demo.webm)
+
 ## ฟีเจอร์
 
 | หน้าจอ | รายละเอียด |
